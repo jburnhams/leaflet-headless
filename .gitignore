@@ -1,2 +1,23 @@
 test-*.png
 examples/leaflet-markercluster/sample-data.geojson
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+
+# Test outputs
+test/actual/*.png
+tests/actual/*.png
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
