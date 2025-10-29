@@ -1,14 +1,44 @@
 {
   "name": "leaflet-headless",
-  "version": "0.2.6",
-  "description": "Leaflet for node.",
-  "main": "index.js",
-  "browser": "browser.js",
+  "version": "2.0.0",
+  "description": "Leaflet for Node.js - Run Leaflet maps in headless Node environments with full TypeScript support",
+  "keywords": [
+    "leaflet",
+    "headless",
+    "node",
+    "maps",
+    "typescript",
+    "gis",
+    "geojson",
+    "tiles"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "lint": "eslint index.js src/* examples/*/index.js",
-    "test": "mocha -t 60000 -R spec test/test.js && npm run lint",
-    "release": "mversion patch -m",
-    "release-minor": "mversion minor -m"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run test",
+    "release": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish"
   },
   "repository": {
     "type": "git",
@@ -16,21 +46,30 @@
   },
   "author": "Jan Pieter Waagmeester <jieter@jieter.nl>",
   "license": "MIT",
-  "readmeFilename": "README.md",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "leaflet": "^1.9.0"
+  },
   "dependencies": {
-    "canvas": "~1.6.2",
-    "jsdom": "~9.8.3",
-    "leaflet": "^1.0.3",
-    "leaflet-image": "^0.4.0",
-    "request": "^2.65.0"
+    "canvas": "^2.11.2",
+    "jsdom": "^25.0.0",
+    "leaflet-image": "^0.4.0"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "chai-leaflet": "0.0.12",
-    "eslint": "^3.12.2",
-    "image-diff": "^1.6.3",
-    "mapbox.js": "^3.0.1",
-    "mocha": "^2.2.1",
-    "mversion": "^1.10.1"
+    "@types/jsdom": "^27.0.0",
+    "@types/leaflet": "^1.9.14",
+    "@types/node": "^20.17.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "chai": "^5.1.0",
+    "eslint": "^8.57.0",
+    "image-diff": "^2.0.0",
+    "leaflet": "^1.9.4",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }
