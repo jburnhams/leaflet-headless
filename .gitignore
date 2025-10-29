@@ -3,7 +3,6 @@ examples/leaflet-markercluster/sample-data.geojson
 
 # Dependencies
 node_modules/
-package-lock.json
 
 # Build outputs
 dist/
