@@ -1,10 +1,10 @@
-# Leaflet-Headless Documentation
+# Leaflet-Node Documentation
 
-This directory contains the source files for the leaflet-headless examples website, which is published to GitHub Pages.
+This directory contains the source files for the leaflet-node examples website, which is published to GitHub Pages.
 
 ## Overview
 
-The documentation website demonstrates leaflet-headless by showing Leaflet.js examples side-by-side with server-generated PNG images. Each example uses the same configuration for both client-side rendering (interactive map) and server-side rendering (static image), proving that leaflet-headless can generate identical output.
+The documentation website demonstrates leaflet-node by showing Leaflet.js examples side-by-side with server-generated PNG images. Each example uses the same configuration for both client-side rendering (interactive map) and server-side rendering (static image), proving that leaflet-node can generate identical output.
 
 ## Structure
 
@@ -23,9 +23,9 @@ npm run build:docs
 ```
 
 This will:
-1. Build the leaflet-headless library (`npm run build`)
+1. Build the leaflet-node library (`npm run build`)
 2. Run the build script (`scripts/build-docs.ts`)
-3. Generate PNG images for each example using leaflet-headless
+3. Generate PNG images for each example using leaflet-node
 4. Copy all source files to `docs-dist/`
 5. Place generated images in `docs-dist/images/`
 
@@ -100,4 +100,4 @@ The workflow:
 - Images are generated server-side during the build process
 - The same `examples.js` configuration is used for both client and server rendering
 - Examples use Leaflet 1.9.4 loaded from CDN for client-side rendering
-- Server-side rendering uses the built leaflet-headless library
+- Server-side rendering uses the built leaflet-node library

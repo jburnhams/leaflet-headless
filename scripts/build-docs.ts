@@ -2,7 +2,7 @@
 /**
  * Build script for generating the docs website
  * This script:
- * 1. Generates PNG images for each example using leaflet-headless
+ * 1. Generates PNG images for each example using leaflet-node
  * 2. Copies the docs source files to docs-dist
  */
 
@@ -39,7 +39,7 @@ async function loadExamples(): Promise<Example[]> {
 }
 
 /**
- * Generate a PNG image for a single example
+ * Generate a PNG image for a single example using leaflet-node
  */
 async function generateExampleImage(example: Example): Promise<void> {
   console.log(`Generating image for: ${example.title}`);

@@ -1,5 +1,5 @@
 {
-  "name": "leaflet-headless",
+  "name": "leaflet-node",
   "version": "2.0.0",
   "description": "Leaflet for Node.js - Run Leaflet maps in headless Node environments with full TypeScript support",
   "keywords": [
@@ -46,9 +46,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:jieter/leaflet-headless.git"
+    "url": "git@github.com:jburnhams/leaflet-node.git"
   },
-  "author": "Jan Pieter Waagmeester <jieter@jieter.nl>",
+  "author": "Jonathan Burnhams",
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0"

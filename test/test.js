@@ -14,7 +14,7 @@ var diff = require('./image-diff.js');
 require('chai-leaflet');
 chai.should();
 
-describe('Leaflet-headless', function () {
+describe('Leaflet-node', function () {
 	var element, map;
 
 	var lat = 52.4, lng = 4.5;

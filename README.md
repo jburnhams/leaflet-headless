@@ -1,6 +1,6 @@
-# Leaflet-headless
+# Leaflet-node
 
-[![npm version](https://img.shields.io/npm/v/leaflet-headless.svg)](https://www.npmjs.com/package/leaflet-headless)
+[![npm version](https://img.shields.io/npm/v/leaflet-node.svg)](https://www.npmjs.com/package/leaflet-node)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
 
@@ -42,17 +42,17 @@ See [node-canvas Windows installation](https://github.com/Automattic/node-canvas
 ## 📦 Installation
 
 ```bash
-npm install leaflet-headless leaflet
+npm install leaflet-node leaflet
 ```
 
 Or with yarn:
 ```bash
-yarn add leaflet-headless leaflet
+yarn add leaflet-node leaflet
 ```
 
 Or with pnpm:
 ```bash
-pnpm add leaflet-headless leaflet
+pnpm add leaflet-node leaflet
 ```
 
 ## 🚀 Quick Start
@@ -60,7 +60,7 @@ pnpm add leaflet-headless leaflet
 ### JavaScript (ESM)
 
 ```javascript
-import L from 'leaflet-headless';
+import L from 'leaflet-node';
 
 // Create a map
 const map = L.map(document.createElement('div')).setView([52, 4], 10);
@@ -84,8 +84,8 @@ console.log('Map saved!');
 ### TypeScript
 
 ```typescript
-import L from 'leaflet-headless';
-import type { LeafletHeadlessMap } from 'leaflet-headless';
+import L from 'leaflet-node';
+import type { LeafletHeadlessMap } from 'leaflet-node';
 
 const map = L.map(document.createElement('div')).setView([52, 4], 10) as LeafletHeadlessMap;
 
@@ -100,7 +100,7 @@ const jpegBuffer = await map.toBuffer('jpeg');
 ### CommonJS
 
 ```javascript
-const L = require('leaflet-headless');
+const L = require('leaflet-node');
 
 const map = L.map(document.createElement('div')).setView([52, 4], 10);
 map.setSize(800, 600);
@@ -116,7 +116,7 @@ map.saveImage('map.png').then(() => {
 
 ### Extended Map Methods
 
-Leaflet-headless adds the following methods to `L.Map`:
+Leaflet-node adds the following methods to `L.Map`:
 
 #### `map.setSize(width, height)`
 
@@ -211,7 +211,7 @@ await uploadToS3(pngBuffer);
 
 ## 🔌 Plugin Compatibility
 
-Leaflet-headless works with many Leaflet plugins. Tested and confirmed working:
+Leaflet-node works with many Leaflet plugins. Tested and confirmed working:
 
 - ✅ [leaflet-image](https://github.com/mapbox/leaflet-image) - Image export (included)
 - ✅ [leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) - Marker clustering
@@ -225,7 +225,7 @@ See the [`examples/`](./examples) directory for complete working examples:
 ### Basic Example
 
 ```typescript
-import L from 'leaflet-headless';
+import L from 'leaflet-node';
 
 const map = L.map(document.createElement('div')).setView([51.505, -0.09], 13);
 
@@ -242,7 +242,7 @@ await map.saveImage('basic-map.png');
 ### GeoJSON with Styling
 
 ```typescript
-import L from 'leaflet-headless';
+import L from 'leaflet-node';
 import { readFile } from 'fs/promises';
 
 const map = L.map(document.createElement('div')).setView([0, 0], 2);
@@ -265,7 +265,7 @@ await map.saveImage('geojson-map.png');
 ### Choropleth Map
 
 ```typescript
-import L from 'leaflet-headless';
+import L from 'leaflet-node';
 
 const map = L.map(document.createElement('div')).setView([37.8, -96], 4);
 
@@ -298,7 +298,7 @@ await map.saveImage('choropleth.png');
 ### In-Memory Buffer Export
 
 ```typescript
-import L from 'leaflet-headless';
+import L from 'leaflet-node';
 
 const map = L.map(document.createElement('div')).setView([52, 4], 10);
 map.setSize(800, 600);
@@ -315,7 +315,7 @@ await uploadToS3(buffer);
 ### WMS Layer
 
 ```typescript
-import L from 'leaflet-headless';
+import L from 'leaflet-node';
 
 const map = L.map(document.createElement('div')).setView([30, -90], 4);
 
@@ -438,7 +438,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-MIT © [Jan Pieter Waagmeester](https://github.com/jieter)
+MIT © [Jonathan Burnhams](https://github.com/jburnhams)
+
+Originally forked from [leaflet-headless](https://github.com/jieter/leaflet-headless) by [Jan Pieter Waagmeester](https://github.com/jieter)
 
 ## 🙏 Attribution
 
@@ -456,4 +458,4 @@ If you find this project useful, please consider giving it a star on GitHub!
 
 ---
 
-**Questions?** Open an issue on [GitHub](https://github.com/jieter/leaflet-headless/issues).
+**Questions?** Open an issue on [GitHub](https://github.com/jburnhams/leaflet-node/issues).

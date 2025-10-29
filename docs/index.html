@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leaflet-Headless Examples</title>
+  <title>Leaflet-Node Examples</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <div class="container">
-      <h1>🗺️ Leaflet-Headless Examples</h1>
+      <h1>🗺️ Leaflet-Node Examples</h1>
       <p class="tagline">Generate server-side map images identical to client-side rendering</p>
       <div class="header-links">
-        <a href="https://github.com/jieter/leaflet-headless" target="_blank">GitHub</a>
-        <a href="https://www.npmjs.com/package/leaflet-headless" target="_blank">npm</a>
+        <a href="https://github.com/jburnhams/leaflet-node" target="_blank">GitHub</a>
+        <a href="https://www.npmjs.com/package/leaflet-node" target="_blank">npm</a>
         <a href="https://leafletjs.com" target="_blank">Leaflet.js</a>
       </div>
     </div>
@@ -22,21 +22,21 @@
 
   <main class="container">
     <section class="intro">
-      <h2>What is Leaflet-Headless?</h2>
+      <h2>What is Leaflet-Node?</h2>
       <p>
-        Leaflet-Headless allows you to run <a href="https://leafletjs.com" target="_blank">Leaflet</a> maps in Node.js environments.
+        Leaflet-Node allows you to run <a href="https://leafletjs.com" target="_blank">Leaflet</a> maps in Node.js environments.
         Perfect for server-side map generation, automated testing, and headless rendering.
       </p>
       <p>
         Below you'll see live Leaflet.js maps on the left and PNG images generated server-side using the exact same configuration on the right.
-        This demonstrates how you can use leaflet-headless to generate identical map images on your server.
+        This demonstrates how you can use leaflet-node to generate identical map images on your server.
       </p>
     </section>
 
     <section class="installation">
       <h2>Quick Start</h2>
-      <pre><code>npm install leaflet-headless leaflet</code></pre>
-      <pre><code class="language-javascript">import L from 'leaflet-headless';
+      <pre><code>npm install leaflet-node leaflet</code></pre>
+      <pre><code class="language-javascript">import L from 'leaflet-node';
 
 const map = L.map(document.createElement('div')).setView([51.505, -0.09], 13);
 
@@ -74,8 +74,8 @@ await map.saveImage('map.png');</code></pre>
   <footer>
     <div class="container">
       <p>
-        Leaflet-Headless is MIT licensed and maintained by
-        <a href="https://github.com/jieter" target="_blank">Jan Pieter Waagmeester</a>
+        Leaflet-Node is MIT licensed and maintained by
+        <a href="https://github.com/jburnhams" target="_blank">Jonathan Burnhams</a>. Originally forked from <a href="https://github.com/jieter/leaflet-headless" target="_blank">leaflet-headless</a> by <a href="https://github.com/jieter" target="_blank">Jan Pieter Waagmeester</a>.
       </p>
       <p>
         Built with ❤️ using <a href="https://leafletjs.com" target="_blank">Leaflet</a>,

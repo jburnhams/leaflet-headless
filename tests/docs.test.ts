@@ -61,7 +61,7 @@ describe('Documentation Build', () => {
       expect(fs.existsSync(indexPath)).toBe(true);
 
       const content = fs.readFileSync(indexPath, 'utf-8');
-      expect(content).toContain('Leaflet-Headless Examples');
+      expect(content).toContain('Leaflet-Node Examples');
       expect(content).toContain('examples-container');
     });
 
