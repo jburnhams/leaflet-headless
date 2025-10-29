@@ -12,6 +12,7 @@ import * as path from 'path';
 import type * as LeafletModule from 'leaflet';
 import type { LeafletHeadlessMap, HeadlessOptions } from './types.js';
 import HeadlessImage from './image.js';
+import { mapToCanvas } from './export-image.js';
 
 // Extend global namespace for headless environment
 declare global {
@@ -132,24 +133,15 @@ function patchMapPrototype(
     this: any,
     filename: string
   ): Promise<string> {
-    const leafletImage = require('leaflet-image');
+    try {
+      const canvas = await mapToCanvas(this);
+      const buffer = canvas.toBuffer('image/png');
 
-    return new Promise<string>((resolve, reject) => {
-      leafletImage(this, (err: Error | null, canvas: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const dataUrl = canvas.toDataURL();
-        const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        fs.writeFile(filename, buffer)
-          .then(() => resolve(filename))
-          .catch(reject);
-      });
-    });
+      await fs.writeFile(filename, buffer);
+      return filename;
+    } catch (err) {
+      throw new Error(`Failed to save map image: ${(err as Error).message}`);
+    }
   };
 
   // Add toBuffer method for in-memory image generation
@@ -157,23 +149,17 @@ function patchMapPrototype(
     this: any,
     format: 'png' | 'jpeg' = 'png'
   ): Promise<Buffer> {
-    const leafletImage = require('leaflet-image');
-
-    return new Promise<Buffer>((resolve, reject) => {
-      leafletImage(this, (err: Error | null, canvas: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
-        const dataUrl = canvas.toDataURL(mimeType);
-        const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        resolve(buffer);
-      });
-    });
+    try {
+      const canvas = await mapToCanvas(this);
+      // @napi-rs/canvas has separate overloads for PNG and JPEG
+      if (format === 'jpeg') {
+        return canvas.toBuffer('image/jpeg');
+      } else {
+        return canvas.toBuffer('image/png');
+      }
+    } catch (err) {
+      throw new Error(`Failed to export map to buffer: ${(err as Error).message}`);
+    }
   };
 }
 
