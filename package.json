@@ -38,7 +38,9 @@
     "prepublishOnly": "npm run build && npm run test",
     "release": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish"
+    "release:major": "npm version major && npm publish",
+    "build:docs": "npm run build && tsx scripts/build-docs.ts",
+    "preview:docs": "npm run build:docs && npx serve docs-dist"
   },
   "repository": {
     "type": "git",
@@ -69,6 +71,7 @@
     "pixelmatch": "^6.0.0",
     "pngjs": "^7.0.0",
     "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }

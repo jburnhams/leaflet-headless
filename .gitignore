@@ -5,6 +5,7 @@ node_modules/
 
 # Build outputs
 dist/
+docs-dist/
 
 # Test outputs
 test/actual/
