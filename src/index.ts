@@ -9,6 +9,7 @@
 import { JSDOM } from 'jsdom';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { createCanvas } from '@napi-rs/canvas';
 import type * as LeafletModule from 'leaflet';
 import type { LeafletHeadlessMap, HeadlessOptions } from './types.js';
 import HeadlessImage from './image.js';
@@ -53,6 +54,54 @@ function initializeEnvironment(options: HeadlessOptions = {}): typeof LeafletMod
   (global as any).document = dom.window.document;
   (global as any).window = dom.window;
   (global as any).Image = HeadlessImage;
+
+  // Polyfill HTMLCanvasElement with @napi-rs/canvas
+  const OriginalHTMLCanvasElement = dom.window.HTMLCanvasElement;
+  const proto = OriginalHTMLCanvasElement.prototype as any;
+
+  // Override createElement to use @napi-rs/canvas for canvas elements
+  const originalCreateElement = dom.window.document.createElement.bind(dom.window.document);
+  dom.window.document.createElement = function(tagName: string, options?: any) {
+    const element = originalCreateElement(tagName, options);
+
+    if (tagName.toLowerCase() === 'canvas') {
+      const width = (element as any).width || 300;
+      const height = (element as any).height || 150;
+      const napiCanvas = createCanvas(width, height);
+
+      // Copy canvas methods to the DOM element
+      (element as any).getContext = function(contextType: string, options?: any) {
+        if (contextType === '2d') {
+          return napiCanvas.getContext('2d', options);
+        }
+        return null;
+      };
+
+      (element as any).toDataURL = function(type?: string, quality?: any) {
+        return (napiCanvas as any).toDataURL(type, quality);
+      };
+
+      (element as any).toBuffer = function(mimeType?: string, quality?: any) {
+        return (napiCanvas as any).toBuffer(mimeType, quality);
+      };
+
+      // Link width and height properties
+      Object.defineProperty(element, 'width', {
+        get() { return napiCanvas.width; },
+        set(value) { napiCanvas.width = value; }
+      });
+
+      Object.defineProperty(element, 'height', {
+        get() { return napiCanvas.height; },
+        set(value) { napiCanvas.height = value; }
+      });
+
+      // Store reference to napi canvas
+      (element as any)._napiCanvas = napiCanvas;
+    }
+
+    return element;
+  };
 
   // Navigator is already available through window
 

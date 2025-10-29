@@ -22,23 +22,51 @@ export async function mapToCanvas(map: any): Promise<Canvas> {
   const container = map.getContainer();
 
   // Find all canvas elements in the map (tiles, vectors, etc.)
-  const canvases = container.querySelectorAll('canvas');
+  let canvases = container.querySelectorAll('canvas');
 
+  // If no canvas elements found, add a temporary vector layer to force canvas creation
+  let tempCircle: any = null;
   if (canvases.length === 0) {
-    throw new Error('No canvas elements found in map. Ensure map is using Canvas renderer.');
+    // Add a transparent circle to trigger canvas renderer creation
+    const center = map.getCenter();
+    const L = (globalThis as any).L;
+    tempCircle = L.circle(center, {
+      radius: 1,
+      opacity: 0,
+      fillOpacity: 0
+    }).addTo(map);
+
+    // Re-query for canvas elements
+    canvases = container.querySelectorAll('canvas');
+
+    if (canvases.length === 0) {
+      if (tempCircle) tempCircle.remove();
+      throw new Error('Unable to create canvas renderer. Map may not be properly initialized.');
+    }
   }
 
   // Composite all canvas layers onto the export canvas
   for (const sourceCanvas of canvases) {
-    // Get the canvas position relative to the map container
-    const rect = sourceCanvas.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    // Access the underlying @napi-rs/canvas instance
+    const napiCanvas = (sourceCanvas as any)._napiCanvas;
 
-    const x = rect.left - containerRect.left;
-    const y = rect.top - containerRect.top;
+    if (!napiCanvas) {
+      console.warn('Canvas element does not have _napiCanvas property, skipping');
+      continue;
+    }
+
+    // Get position from the element's style or offsetLeft/offsetTop
+    const x = sourceCanvas.offsetLeft || 0;
+    const y = sourceCanvas.offsetTop || 0;
 
     // Draw this canvas layer onto our export canvas
-    ctx.drawImage(sourceCanvas, x, y);
+    // Use the napi canvas directly for better compatibility
+    ctx.drawImage(napiCanvas as any, x, y);
+  }
+
+  // Clean up temporary circle if created
+  if (tempCircle) {
+    tempCircle.remove();
   }
 
   return canvas;

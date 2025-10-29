@@ -4,7 +4,7 @@
  */
 
 var path = require('path');
-var L = require('../../index.js');
+var L = require('../..').default;
 
 var document = global.document;
 
