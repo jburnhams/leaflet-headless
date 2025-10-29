@@ -1,5 +1,5 @@
 /**
- * Leaflet-headless: Run Leaflet in Node.js environments
+ * Leaflet-node: Run Leaflet in Node.js environments
  *
  * This module sets up a fake DOM environment using jsdom to enable
  * Leaflet to run in Node.js for server-side map generation, testing,

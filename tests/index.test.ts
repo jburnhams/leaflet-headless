@@ -7,7 +7,7 @@ import { imageDiffAsync } from './image-diff.js';
 // Canvas renderer for vector layers
 const canvas = L.canvas ? L.canvas() : undefined;
 
-describe('Leaflet-headless', () => {
+describe('Leaflet-node', () => {
   let element: HTMLDivElement;
   let map: L.Map;
 

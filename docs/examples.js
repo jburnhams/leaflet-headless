@@ -1,5 +1,5 @@
 /**
- * Examples configuration for leaflet-headless demo page
+ * Examples configuration for leaflet-node demo page
  * Each example is rendered both client-side (live) and server-side (PNG)
  */
 
