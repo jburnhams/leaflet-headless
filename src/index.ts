@@ -55,6 +55,15 @@ function initializeEnvironment(options: HeadlessOptions = {}): typeof LeafletMod
   (global as any).window = dom.window;
   (global as any).Image = HeadlessImage;
 
+  // Set navigator (read-only, needs defineProperty)
+  if (!(global as any).navigator) {
+    Object.defineProperty(global, 'navigator', {
+      value: dom.window.navigator,
+      writable: true,
+      configurable: true
+    });
+  }
+
   // Polyfill HTMLCanvasElement with @napi-rs/canvas
   const OriginalHTMLCanvasElement = dom.window.HTMLCanvasElement;
   const proto = OriginalHTMLCanvasElement.prototype as any;
