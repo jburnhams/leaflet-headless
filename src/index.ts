@@ -9,9 +9,11 @@
 import { JSDOM } from 'jsdom';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { createCanvas } from '@napi-rs/canvas';
 import type * as LeafletModule from 'leaflet';
 import type { LeafletHeadlessMap, HeadlessOptions } from './types.js';
 import HeadlessImage from './image.js';
+import { mapToCanvas } from './export-image.js';
 
 // Extend global namespace for headless environment
 declare global {
@@ -52,6 +54,63 @@ function initializeEnvironment(options: HeadlessOptions = {}): typeof LeafletMod
   (global as any).document = dom.window.document;
   (global as any).window = dom.window;
   (global as any).Image = HeadlessImage;
+
+  // Set navigator (read-only, needs defineProperty)
+  if (!(global as any).navigator) {
+    Object.defineProperty(global, 'navigator', {
+      value: dom.window.navigator,
+      writable: true,
+      configurable: true
+    });
+  }
+
+  // Polyfill HTMLCanvasElement with @napi-rs/canvas
+  const OriginalHTMLCanvasElement = dom.window.HTMLCanvasElement;
+  const proto = OriginalHTMLCanvasElement.prototype as any;
+
+  // Override createElement to use @napi-rs/canvas for canvas elements
+  const originalCreateElement = dom.window.document.createElement.bind(dom.window.document);
+  dom.window.document.createElement = function(tagName: string, options?: any) {
+    const element = originalCreateElement(tagName, options);
+
+    if (tagName.toLowerCase() === 'canvas') {
+      const width = (element as any).width || 300;
+      const height = (element as any).height || 150;
+      const napiCanvas = createCanvas(width, height);
+
+      // Copy canvas methods to the DOM element
+      (element as any).getContext = function(contextType: string, options?: any) {
+        if (contextType === '2d') {
+          return napiCanvas.getContext('2d', options);
+        }
+        return null;
+      };
+
+      (element as any).toDataURL = function(type?: string, quality?: any) {
+        return (napiCanvas as any).toDataURL(type, quality);
+      };
+
+      (element as any).toBuffer = function(mimeType?: string, quality?: any) {
+        return (napiCanvas as any).toBuffer(mimeType, quality);
+      };
+
+      // Link width and height properties
+      Object.defineProperty(element, 'width', {
+        get() { return napiCanvas.width; },
+        set(value) { napiCanvas.width = value; }
+      });
+
+      Object.defineProperty(element, 'height', {
+        get() { return napiCanvas.height; },
+        set(value) { napiCanvas.height = value; }
+      });
+
+      // Store reference to napi canvas
+      (element as any)._napiCanvas = napiCanvas;
+    }
+
+    return element;
+  };
 
   // Navigator is already available through window
 
@@ -132,24 +191,15 @@ function patchMapPrototype(
     this: any,
     filename: string
   ): Promise<string> {
-    const leafletImage = require('leaflet-image');
+    try {
+      const canvas = await mapToCanvas(this);
+      const buffer = canvas.toBuffer('image/png');
 
-    return new Promise<string>((resolve, reject) => {
-      leafletImage(this, (err: Error | null, canvas: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const dataUrl = canvas.toDataURL();
-        const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        fs.writeFile(filename, buffer)
-          .then(() => resolve(filename))
-          .catch(reject);
-      });
-    });
+      await fs.writeFile(filename, buffer);
+      return filename;
+    } catch (err) {
+      throw new Error(`Failed to save map image: ${(err as Error).message}`);
+    }
   };
 
   // Add toBuffer method for in-memory image generation
@@ -157,23 +207,17 @@ function patchMapPrototype(
     this: any,
     format: 'png' | 'jpeg' = 'png'
   ): Promise<Buffer> {
-    const leafletImage = require('leaflet-image');
-
-    return new Promise<Buffer>((resolve, reject) => {
-      leafletImage(this, (err: Error | null, canvas: any) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
-        const dataUrl = canvas.toDataURL(mimeType);
-        const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        resolve(buffer);
-      });
-    });
+    try {
+      const canvas = await mapToCanvas(this);
+      // @napi-rs/canvas has separate overloads for PNG and JPEG
+      if (format === 'jpeg') {
+        return canvas.toBuffer('image/jpeg');
+      } else {
+        return canvas.toBuffer('image/png');
+      }
+    } catch (err) {
+      throw new Error(`Failed to export map to buffer: ${(err as Error).message}`);
+    }
   };
 }
 

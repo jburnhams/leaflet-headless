@@ -4,7 +4,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { Image as CanvasImage } from 'canvas';
+import { Image as CanvasImage } from '@napi-rs/canvas';
 import type { HeadlessImage } from './types.js';
 
 /**
