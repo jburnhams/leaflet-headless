@@ -1,4 +1,3 @@
-test-*.png
 examples/leaflet-markercluster/sample-data.geojson
 
 # Dependencies
@@ -8,8 +7,8 @@ node_modules/
 dist/
 
 # Test outputs
-test/actual/*.png
-tests/actual/*.png
+test/actual/
+tests/actual/
 coverage/
 
 # Logs

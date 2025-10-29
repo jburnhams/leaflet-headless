@@ -208,20 +208,12 @@ describe('Leaflet-headless', () => {
       // Ensure actual directory exists
       await fs.mkdir(path.dirname(filename), { recursive: true });
 
-      // Run example
-      const exampleModule = await import(`../examples/${exampleName}/index.js`);
-      const exampleFn = exampleModule.default || exampleModule;
+      // Run example - import TypeScript examples which use async/await
+      const exampleModule = await import(`../examples/${exampleName}/index.ts`);
+      const exampleFn = exampleModule.default;
 
-      // Convert callback-based example to promise
-      await new Promise<string>((resolve, reject) => {
-        try {
-          exampleFn(filename, (actual: string) => {
-            resolve(actual);
-          });
-        } catch (err) {
-          reject(err);
-        }
-      });
+      // Call the async example function
+      await exampleFn(filename);
 
       // Check file exists
       const stats = await fs.stat(filename);
