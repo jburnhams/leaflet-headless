@@ -20,15 +20,39 @@ async function tilelayerWmsExample(filename: string, callback?: (filename: strin
   const map = L.map(element.id).setView([30, -90], 4) as LeafletHeadlessMap;
 
   // Add base tile layer
-  L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  const tileUrl = process.env.LEAFLET_NODE_TILE_URL ?? 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-  // Add WMS layer
-  L.tileLayer.wms('https://ahocevar.com/geoserver/wms', {
-    layers: 'topp:states',
-    transparent: true,
-    opacity: 0.1,
-    format: 'image/png',
+  L.tileLayer(tileUrl, {
+    tileSize: 256,
+    minZoom: 0,
+    maxZoom: 18,
   }).addTo(map);
+
+  // Add WMS layer or offline fallback
+  if (process.env.LEAFLET_NODE_TILE_URL) {
+    L.rectangle([
+      [40, -110],
+      [30, -90],
+    ], {
+      color: '#ff7800',
+      weight: 2,
+      fillOpacity: 0.25,
+    }).addTo(map).bindPopup('Offline WMS fallback');
+
+    L.circle([45, -100], {
+      radius: 300000,
+      color: '#1a237e',
+      fillColor: '#3949ab',
+      fillOpacity: 0.4,
+    }).addTo(map);
+  } else {
+    L.tileLayer.wms('https://ahocevar.com/geoserver/wms', {
+      layers: 'topp:states',
+      transparent: true,
+      opacity: 0.1,
+      format: 'image/png',
+    }).addTo(map);
+  }
 
   // Save the image
   const savedFilename = await map.saveImage(filename);

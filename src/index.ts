@@ -12,7 +12,7 @@ import * as path from 'path';
 import { createCanvas } from '@napi-rs/canvas';
 import type * as LeafletModule from 'leaflet';
 import type { LeafletHeadlessMap, HeadlessOptions } from './types.js';
-import HeadlessImage from './image.js';
+import HeadlessImage, { loadImageSource } from './image.js';
 import { mapToCanvas } from './export-image.js';
 
 // Extend global namespace for headless environment
@@ -54,6 +54,48 @@ function initializeEnvironment(options: HeadlessOptions = {}): typeof LeafletMod
   (global as any).document = dom.window.document;
   (global as any).window = dom.window;
   (global as any).Image = HeadlessImage;
+  (dom.window as any).Image = HeadlessImage;
+
+  // Ensure HTMLImageElement loads resources through our headless loader
+  const imagePrototype = dom.window.HTMLImageElement.prototype as any;
+  const originalSrcDescriptor = Object.getOwnPropertyDescriptor(imagePrototype, 'src');
+
+  Object.defineProperty(imagePrototype, 'src', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      if (originalSrcDescriptor?.get) {
+        return originalSrcDescriptor.get.call(this);
+      }
+      return this.getAttribute('src') ?? '';
+    },
+    set(value: string) {
+      if (originalSrcDescriptor?.set) {
+        originalSrcDescriptor.set.call(this, value);
+      } else {
+        this.setAttribute('src', value);
+      }
+
+      const load = async () => {
+        try {
+          const canvasImage = await loadImageSource(value);
+          (this as any)._napiImage = canvasImage;
+          this.width = canvasImage.width;
+          this.height = canvasImage.height;
+          const loadEvent = new dom.window.Event('load');
+          this.dispatchEvent(loadEvent);
+        } catch (error) {
+          const errorEvent = new dom.window.Event('error');
+          (errorEvent as any).error = error;
+          this.dispatchEvent(errorEvent);
+        }
+      };
+
+      load().catch((error) => {
+        console.error('Error loading image element:', error);
+      });
+    }
+  });
 
   // Set navigator (read-only, needs defineProperty)
   if (!(global as any).navigator) {

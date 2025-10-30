@@ -6,6 +6,7 @@
  */
 
 import { createCanvas, Canvas } from '@napi-rs/canvas';
+import { loadImageSource } from './image.js';
 
 /**
  * Export a Leaflet map to a canvas element
@@ -21,12 +22,14 @@ export async function mapToCanvas(map: any): Promise<Canvas> {
   // Get the map container element
   const container = map.getContainer();
 
-  // Find all canvas elements in the map (tiles, vectors, etc.)
-  let canvases = container.querySelectorAll('canvas');
+  // Find all drawable elements in the map (tile images, vector canvases, etc.)
+  const drawableElements = Array.from(
+    container.querySelectorAll<HTMLCanvasElement | HTMLImageElement>('canvas, img')
+  );
 
-  // If no canvas elements found, add a temporary vector layer to force canvas creation
+  // If no drawable elements found, add a temporary vector layer to force canvas creation
   let tempCircle: any = null;
-  if (canvases.length === 0) {
+  if (drawableElements.length === 0) {
     // Add a transparent circle to trigger canvas renderer creation
     const center = map.getCenter();
     const L = (globalThis as any).L;
@@ -36,32 +39,78 @@ export async function mapToCanvas(map: any): Promise<Canvas> {
       fillOpacity: 0
     }).addTo(map);
 
-    // Re-query for canvas elements
-    canvases = container.querySelectorAll('canvas');
+    // Re-query for drawable elements
+    drawableElements.push(
+      ...Array.from(
+        container.querySelectorAll<HTMLCanvasElement | HTMLImageElement>('canvas, img')
+      )
+    );
 
-    if (canvases.length === 0) {
+    if (drawableElements.length === 0) {
       if (tempCircle) tempCircle.remove();
       throw new Error('Unable to create canvas renderer. Map may not be properly initialized.');
     }
   }
 
-  // Composite all canvas layers onto the export canvas
-  for (const sourceCanvas of canvases) {
-    // Access the underlying @napi-rs/canvas instance
-    const napiCanvas = (sourceCanvas as any)._napiCanvas;
+  // Composite all drawable layers onto the export canvas respecting DOM order
+  for (const element of drawableElements) {
+    const tagName = element.tagName.toLowerCase();
 
-    if (!napiCanvas) {
-      console.warn('Canvas element does not have _napiCanvas property, skipping');
+    // Determine element position from style or offsets
+    const styleLeft = (element as HTMLElement).style?.left;
+    const styleTop = (element as HTMLElement).style?.top;
+
+    const parsedLeft = styleLeft ? parseFloat(styleLeft) : NaN;
+    const parsedTop = styleTop ? parseFloat(styleTop) : NaN;
+
+    const x = Number.isFinite(parsedLeft)
+      ? parsedLeft
+      : Number.isFinite(element.offsetLeft)
+        ? element.offsetLeft
+        : 0;
+    const y = Number.isFinite(parsedTop)
+      ? parsedTop
+      : Number.isFinite(element.offsetTop)
+        ? element.offsetTop
+        : 0;
+
+    if (tagName === 'canvas') {
+      const napiCanvas = (element as any)._napiCanvas;
+
+      if (!napiCanvas) {
+        console.warn('Canvas element does not have _napiCanvas property, skipping');
+        continue;
+      }
+
+      ctx.drawImage(napiCanvas as any, x, y);
       continue;
     }
 
-    // Get position from the element's style or offsetLeft/offsetTop
-    const x = sourceCanvas.offsetLeft || 0;
-    const y = sourceCanvas.offsetTop || 0;
+    if (tagName === 'img') {
+      const imgElement = element as HTMLImageElement;
+      const src = imgElement.src;
 
-    // Draw this canvas layer onto our export canvas
-    // Use the napi canvas directly for better compatibility
-    ctx.drawImage(napiCanvas as any, x, y);
+      if (!src) {
+        console.warn('Image element without src encountered during export, skipping');
+        continue;
+      }
+
+      try {
+        const existing = (imgElement as any)._napiImage;
+        const image = existing || await loadImageSource(src);
+
+        if (!existing) {
+          (imgElement as any)._napiImage = image;
+        }
+
+        const width = imgElement.width || parseInt(imgElement.getAttribute('width') || '0', 10) || image.width;
+        const height = imgElement.height || parseInt(imgElement.getAttribute('height') || '0', 10) || image.height;
+
+        ctx.drawImage(image as any, x, y, width, height);
+      } catch (error) {
+        console.warn(`Failed to draw tile image ${src}: ${(error as Error).message}`);
+      }
+    }
   }
 
   // Clean up temporary circle if created

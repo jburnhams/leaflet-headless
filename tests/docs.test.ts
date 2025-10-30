@@ -6,9 +6,11 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { execSync } from 'child_process';
 import { PNG } from 'pngjs';
+import { analyzePng } from './helpers/png-analysis.js';
+import { ensureTileFixture } from './helpers/tile-fixture.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +19,8 @@ const rootDir = path.join(__dirname, '..');
 const docsDir = path.join(rootDir, 'docs');
 const distDir = path.join(rootDir, 'docs-dist');
 const imagesDir = path.join(distDir, 'images');
+
+let tileFixtureUrl: string;
 
 interface Example {
   id: string;
@@ -30,11 +34,19 @@ describe('Documentation Build', () => {
   let examples: Example[];
 
   beforeAll(async () => {
+    const fixtureFile = await ensureTileFixture();
+    tileFixtureUrl = pathToFileURL(fixtureFile).toString();
+    process.env.LEAFLET_NODE_TILE_URL = tileFixtureUrl;
+
     // Build the docs
     console.log('Building documentation...');
     execSync('npm run build:docs', {
       cwd: rootDir,
-      stdio: 'inherit'
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        LEAFLET_NODE_TILE_URL: tileFixtureUrl,
+      },
     });
 
     // Load examples
@@ -124,6 +136,22 @@ describe('Documentation Build', () => {
         expect(stats.size,
           `Image for ${example.id} should be larger than 1KB, got ${stats.size} bytes`
         ).toBeGreaterThan(1024);
+      });
+    });
+
+    it('should generate images with varied pixel data', () => {
+      examples.forEach((example) => {
+        const imagePath = path.join(imagesDir, `${example.id}.png`);
+        const buffer = fs.readFileSync(imagePath);
+        const analysis = analyzePng(buffer);
+
+        expect(analysis.nonTransparentPixels,
+          `Image for ${example.id} should contain map pixels`
+        ).toBeGreaterThan(example.width * example.height * 0.1);
+
+        expect(analysis.uniqueColorCount,
+          `Image for ${example.id} should contain diverse colors`
+        ).toBeGreaterThan(50);
       });
     });
 

@@ -56,17 +56,27 @@ async function choroplethExample(filename: string, callback?: (filename: string)
   // Create the map
   const map = L.map(element.id).setView([37.8, -96], 4) as LeafletHeadlessMap;
 
-  // Add base tile layer
-  L.tileLayer('http://{s}.tile.stamen.com/toner-background/{z}/{x}/{y}.png', {
-    attribution:
-      'Map tiles by <a href="http://stamen.com">Stamen Design</a>, ' +
-      '<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; ' +
-      'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
-      '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-    subdomains: 'abcd',
-    minZoom: 0,
-    maxZoom: 20,
-  }).addTo(map);
+  const tileUrl = process.env.LEAFLET_NODE_TILE_URL;
+
+  if (tileUrl) {
+    L.tileLayer(tileUrl, {
+      tileSize: 256,
+      minZoom: 0,
+      maxZoom: 18,
+      attribution: 'Test tile fixture',
+    }).addTo(map);
+  } else {
+    L.tileLayer('http://{s}.tile.stamen.com/toner-background/{z}/{x}/{y}.png', {
+      attribution:
+        'Map tiles by <a href="http://stamen.com">Stamen Design</a>, ' +
+        '<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; ' +
+        'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+        '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+      subdomains: 'abcd',
+      minZoom: 0,
+      maxZoom: 20,
+    }).addTo(map);
+  }
 
   // Add GeoJSON with styled choropleth
   L.geoJson(usStates, {
