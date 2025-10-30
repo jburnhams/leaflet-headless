@@ -193,6 +193,12 @@ function initializeExamples() {
       </div>
     `;
 
+    const mapContainer = clientSide.querySelector('.map-container');
+    if (mapContainer && example.width && example.height) {
+      mapContainer.style.width = `${example.width}px`;
+      mapContainer.style.height = `${example.height}px`;
+    }
+
     // Server-side (PNG image)
     const serverSide = document.createElement('div');
     serverSide.className = 'example-side server-side';
@@ -206,6 +212,12 @@ function initializeExamples() {
         onerror="this.alt='Image not yet generated. Run the build script to generate images.'; this.style.objectFit='contain'; this.style.padding='20px';"
       />
     `;
+
+    const serverImage = serverSide.querySelector('img.server-image');
+    if (serverImage && example.width && example.height) {
+      serverImage.style.width = `${example.width}px`;
+      serverImage.style.height = `${example.height}px`;
+    }
 
     // Assemble the example
     exampleDiv.appendChild(header);
@@ -250,6 +262,7 @@ function initializeMap(example) {
 
       // Set custom size if specified
       if (example.width && example.height) {
+        mapElement.style.width = `${example.width}px`;
         mapElement.style.height = `${example.height}px`;
       }
 

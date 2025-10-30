@@ -47,6 +47,8 @@ async function generateExampleImage(example: Example): Promise<void> {
   // Create a map element
   const element = document.createElement('div');
   element.id = `map-${example.id}`;
+  element.style.width = `${example.width}px`;
+  element.style.height = `${example.height}px`;
   document.body.appendChild(element);
 
   try {
