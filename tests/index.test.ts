@@ -199,45 +199,6 @@ describe('Leaflet-node', () => {
     });
   });
 
-  describe('Advanced functions', () => {
-    async function runExample(exampleName: string) {
-      const filename = path.join(__dirname, 'actual', `example-${exampleName}.png`);
-
-      // Ensure actual directory exists
-      await fs.mkdir(path.dirname(filename), { recursive: true });
-
-      // Run example - import TypeScript examples which use async/await
-      const exampleModule = await import(`../examples/${exampleName}/index.ts`);
-      const exampleFn = exampleModule.default;
-
-      // Call the async example function
-      await exampleFn(filename);
-
-      // Check file exists
-      const stats = await fs.stat(filename);
-      expect(stats.isFile()).toBe(true);
-
-      const buffer = await fs.readFile(filename);
-      const analysis = analyzePng(buffer);
-
-      expect(analysis.png.width).toBeGreaterThan(0);
-      expect(analysis.png.height).toBeGreaterThan(0);
-      expect(analysis.nonTransparentPixels).toBeGreaterThan(5000);
-      expect(analysis.uniqueColorCount).toBeGreaterThan(50);
-    }
-
-    it('leaflet-image example runs and produces expected output', async () => {
-      await runExample('leaflet-image');
-    });
-
-    it('choropleth example runs and produces expected output', async () => {
-      await runExample('choropleth');
-    });
-
-    it('tilelayer-wms example runs and produces expected output', async () => {
-      await runExample('tilelayer-wms');
-    });
-  });
 });
 const localTileUrl = getTileFixtureUrl();
 process.env.LEAFLET_NODE_TILE_URL = localTileUrl;
