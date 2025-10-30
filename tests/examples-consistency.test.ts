@@ -95,6 +95,110 @@ function countDifferingPixels(pngA: PNG, pngB: PNG, tolerance = 0): number {
   return diffCount;
 }
 
+interface DiffBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+function boundingBoxOfDifferences(pngA: PNG, pngB: PNG, tolerance = 0): DiffBounds | null {
+  if (pngA.width !== pngB.width || pngA.height !== pngB.height) {
+    throw new Error('PNG dimensions must match to compare pixel differences');
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (let y = 0; y < pngA.height; y++) {
+    for (let x = 0; x < pngA.width; x++) {
+      const idx = (y * pngA.width + x) * 4;
+      const dr = Math.abs(pngA.data[idx] - pngB.data[idx]);
+      const dg = Math.abs(pngA.data[idx + 1] - pngB.data[idx + 1]);
+      const db = Math.abs(pngA.data[idx + 2] - pngB.data[idx + 2]);
+      const da = Math.abs(pngA.data[idx + 3] - pngB.data[idx + 3]);
+
+      if (dr > tolerance || dg > tolerance || db > tolerance || da > tolerance) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return null;
+  }
+
+  return { minX, minY, maxX, maxY };
+}
+
+function boundingBoxOfDifferencesInRegion(
+  pngA: PNG,
+  pngB: PNG,
+  tolerance: number,
+  region: DiffBounds
+): DiffBounds | null {
+  if (pngA.width !== pngB.width || pngA.height !== pngB.height) {
+    throw new Error('PNG dimensions must match to compare pixel differences');
+  }
+
+  const minXLimit = Math.max(0, Math.floor(region.minX));
+  const minYLimit = Math.max(0, Math.floor(region.minY));
+  const maxXLimit = Math.min(pngA.width - 1, Math.ceil(region.maxX));
+  const maxYLimit = Math.min(pngA.height - 1, Math.ceil(region.maxY));
+
+  if (minXLimit > maxXLimit || minYLimit > maxYLimit) {
+    return null;
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (let y = minYLimit; y <= maxYLimit; y++) {
+    for (let x = minXLimit; x <= maxXLimit; x++) {
+      const idx = (y * pngA.width + x) * 4;
+      const dr = Math.abs(pngA.data[idx] - pngB.data[idx]);
+      const dg = Math.abs(pngA.data[idx + 1] - pngB.data[idx + 1]);
+      const db = Math.abs(pngA.data[idx + 2] - pngB.data[idx + 2]);
+      const da = Math.abs(pngA.data[idx + 3] - pngB.data[idx + 3]);
+
+      if (dr > tolerance || dg > tolerance || db > tolerance || da > tolerance) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return null;
+  }
+
+  return { minX, minY, maxX, maxY };
+}
+
+function toPointTuple(value: any, fallback: [number, number]): [number, number] {
+  if (Array.isArray(value) && value.length >= 2) {
+    const [x, y] = value;
+    if (Number.isFinite(x) && Number.isFinite(y)) {
+      return [x, y];
+    }
+  }
+
+  if (value && typeof value.x === 'number' && typeof value.y === 'number') {
+    return [value.x, value.y];
+  }
+
+  return fallback;
+}
+
 async function withExample<T>(
   exampleId: string,
   handler: (context: { map: LeafletMap; example: ExampleConfig; initialSize: { x: number; y: number } }) => Promise<T> | T
@@ -185,15 +289,27 @@ describe('Documentation examples stay in sync between client and server configur
   it('renders the quick-start marker into the exported PNG where expected', async () => {
     await withExample('quick-start', async ({ map, example }) => {
       await waitForTiles(map);
+
+      const initialBuffer = await (map as any).toBuffer('png');
+      const { png: initialPng } = analyzePng(initialBuffer);
+
+      expect(initialPng.width).toBe(example.width);
+      expect(initialPng.height).toBe(example.height);
+
+      const markers = getMarkers(map);
+      expect(markers.length).toBeGreaterThan(0);
+      const marker = markers[0];
+
+      if (typeof map.closePopup === 'function') {
+        map.closePopup();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
       const buffer = await (map as any).toBuffer('png');
       const { png: pngWithMarker } = analyzePng(buffer);
 
       expect(pngWithMarker.width).toBe(example.width);
       expect(pngWithMarker.height).toBe(example.height);
-
-      const markers = getMarkers(map);
-      expect(markers.length).toBeGreaterThan(0);
-      const marker = markers[0];
 
       marker.remove();
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -203,6 +319,40 @@ describe('Documentation examples stay in sync between client and server configur
 
       const differingPixels = countDifferingPixels(pngWithMarker, pngWithoutMarker, 20);
       expect(differingPixels).toBeGreaterThan(200);
+
+      const diffBounds = boundingBoxOfDifferences(pngWithMarker, pngWithoutMarker, 20);
+      expect(diffBounds).not.toBeNull();
+
+      const markerLatLng = marker.getLatLng();
+      const markerPoint = map.latLngToContainerPoint(markerLatLng);
+      const iconOptions = (marker.options.icon as any)?.options ?? {};
+      const iconSize = toPointTuple(iconOptions.iconSize, [25, 41]);
+      const iconAnchor = toPointTuple(iconOptions.iconAnchor, [12, 41]);
+
+      const expectedTopLeftX = markerPoint.x - iconAnchor[0];
+      const expectedTopLeftY = markerPoint.y - iconAnchor[1];
+      const expectedBottomRightX = expectedTopLeftX + iconSize[0];
+      const expectedBottomRightY = expectedTopLeftY + iconSize[1];
+
+      const regionPadding = 25;
+      const region: DiffBounds = {
+        minX: expectedTopLeftX - regionPadding,
+        minY: expectedTopLeftY - regionPadding,
+        maxX: expectedBottomRightX + regionPadding,
+        maxY: expectedBottomRightY + regionPadding,
+      };
+      const markerBounds = boundingBoxOfDifferencesInRegion(
+        pngWithMarker,
+        pngWithoutMarker,
+        20,
+        region
+      );
+      expect(markerBounds).not.toBeNull();
+      const bounds = markerBounds!;
+      expect(Math.abs(bounds.minX - expectedTopLeftX)).toBeLessThanOrEqual(3);
+      expect(Math.abs(bounds.minY - expectedTopLeftY)).toBeLessThanOrEqual(3);
+      expect(Math.abs(bounds.maxX - expectedBottomRightX)).toBeLessThanOrEqual(3);
+      expect(Math.abs(bounds.maxY - expectedBottomRightY)).toBeLessThanOrEqual(3);
     });
   });
 
@@ -221,6 +371,27 @@ describe('Documentation examples stay in sync between client and server configur
 
       const differingPixels = countDifferingPixels(pngWithPopup, pngWithoutPopup, 15);
       expect(differingPixels).toBeGreaterThan(4000);
+
+      const diffBounds = boundingBoxOfDifferences(pngWithPopup, pngWithoutPopup, 12);
+      expect(diffBounds).not.toBeNull();
+
+      const popup: any = (map as any)._popup;
+      expect(popup).toBeDefined();
+      if (!popup) {
+        return;
+      }
+
+      const anchorPoint = map.latLngToContainerPoint(popup.getLatLng());
+      const popupAnchor = (L as any).point(popup._getAnchor ? popup._getAnchor() : [0, 0]);
+      const optionOffset = popup.options?.offset ? (L as any).point(popup.options.offset) : (L as any).point(0, 0);
+      const totalAnchor = anchorPoint.add(popupAnchor).add(optionOffset);
+
+      const bounds = diffBounds!;
+      const centerX = (bounds.minX + bounds.maxX) / 2;
+      expect(Math.abs(centerX - totalAnchor.x)).toBeLessThanOrEqual(4);
+      expect(Math.abs(bounds.maxY - totalAnchor.y)).toBeLessThanOrEqual(3);
+      expect(bounds.minY).toBeLessThan(totalAnchor.y - 40);
     });
   });
+
 });
