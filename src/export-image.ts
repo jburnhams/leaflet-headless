@@ -262,7 +262,7 @@ export async function mapToCanvas(map: any): Promise<Canvas> {
     tempCircle.remove();
   }
 
-  await drawPopupOverlays(map, ctx);
+  await drawPopupOverlays(map, ctx, size);
 
   return canvas;
 }
@@ -340,7 +340,8 @@ function normalisePopupText(contentNode: HTMLElement | null | undefined): string
 function measurePopupLayout(
   map: any,
   popup: any,
-  ctx: CanvasRenderingContext2D
+  ctx: CanvasRenderingContext2D,
+  _size?: { x: number; y: number }
 ): PopupLayout | null {
   if (!popup || typeof popup.getLatLng !== 'function') {
     return null;
@@ -429,7 +430,8 @@ function drawRoundedRect(
 
 async function drawPopupOverlays(
   map: any,
-  ctx: CanvasRenderingContext2D
+  ctx: CanvasRenderingContext2D,
+  size?: { x: number; y: number }
 ): Promise<void> {
   const popupLayers = collectPopupLayers(map);
   if (popupLayers.length === 0) {
@@ -437,7 +439,7 @@ async function drawPopupOverlays(
   }
 
   for (const popup of popupLayers) {
-    const layout = measurePopupLayout(map, popup, ctx);
+    const layout = measurePopupLayout(map, popup, ctx, size);
     if (!layout) {
       continue;
     }

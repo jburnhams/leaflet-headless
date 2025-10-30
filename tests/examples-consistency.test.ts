@@ -289,6 +289,13 @@ describe('Documentation examples stay in sync between client and server configur
   it('renders the quick-start marker into the exported PNG where expected', async () => {
     await withExample('quick-start', async ({ map, example }) => {
       await waitForTiles(map);
+
+      const initialBuffer = await (map as any).toBuffer('png');
+      const { png: initialPng } = analyzePng(initialBuffer);
+
+      expect(initialPng.width).toBe(example.width);
+      expect(initialPng.height).toBe(example.height);
+
       const markers = getMarkers(map);
       expect(markers.length).toBeGreaterThan(0);
       const marker = markers[0];
@@ -386,4 +393,5 @@ describe('Documentation examples stay in sync between client and server configur
       expect(bounds.minY).toBeLessThan(totalAnchor.y - 40);
     });
   });
+
 });
