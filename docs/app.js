@@ -123,31 +123,36 @@ function createCodeSection(example) {
     elements.push(notesElement);
   }
 
-  if (elements.length === 0) {
+  const descriptionText = codeDetails.description
+    || `Use this configuration with Leaflet.js in the browser or leaflet-node on the server. In Node set the map size to ${example.width}×${example.height} before exporting.`;
+
+  if (elements.length === 0 && !descriptionText) {
     return null;
   }
 
-  const section = document.createElement('div');
+  const section = document.createElement('details');
   section.className = 'example-code';
 
-  const heading = document.createElement('h4');
-  heading.className = 'code-heading';
-  heading.textContent = codeDetails.heading || 'Code & setup';
-  section.appendChild(heading);
+  const summary = document.createElement('summary');
+  summary.className = 'code-summary';
+  summary.textContent = codeDetails.heading || 'Code & setup';
+  section.appendChild(summary);
 
-  const descriptionText = codeDetails.description
-    || `Use this configuration with Leaflet.js in the browser or leaflet-node on the server. In Node set the map size to ${example.width}×${example.height} before exporting.`;
+  const content = document.createElement('div');
+  content.className = 'code-content';
 
   if (descriptionText) {
     const description = document.createElement('p');
     description.className = 'code-description';
     description.textContent = descriptionText;
-    section.appendChild(description);
+    content.appendChild(description);
   }
 
   elements.forEach((element) => {
-    section.appendChild(element);
+    content.appendChild(element);
   });
+
+  section.appendChild(content);
 
   return section;
 }

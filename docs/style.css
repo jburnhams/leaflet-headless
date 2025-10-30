@@ -157,12 +157,55 @@ h2 {
   font-size: 1.2rem;
 }
 
-.quick-start-card ul {
-  margin-left: 20px;
+.quick-start-details {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(44, 95, 45, 0.05);
+}
+
+.quick-start-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary-color);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+}
+
+.quick-start-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.quick-start-details summary::after {
+  content: '▸';
+  transition: transform 0.2s ease;
+}
+
+.quick-start-details[open] summary::after {
+  transform: rotate(90deg);
+}
+
+.quick-start-details[open] summary {
+  border-bottom: 1px solid var(--border-color);
+  background: white;
+}
+
+.quick-start-details ul {
+  padding: 16px 24px 8px 40px;
+  margin: 0;
   list-style: disc;
   font-size: 0.95rem;
   display: grid;
   gap: 8px;
+}
+
+.quick-start-details pre {
+  padding: 12px 20px 20px;
+  margin: 0;
+  border-top: 1px solid var(--border-color);
 }
 
 .quick-start-card pre {
@@ -207,17 +250,44 @@ h2 {
 }
 
 .example-code {
-  padding: 25px 30px 20px;
   background: #fefefe;
   border-bottom: 1px solid var(--border-color);
 }
 
-.code-heading {
+.code-summary {
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--primary-color);
-  margin-bottom: 10px;
+  padding: 20px 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+}
+
+.code-summary::-webkit-details-marker {
+  display: none;
+}
+
+.code-summary::after {
+  content: '▸';
+  transition: transform 0.2s ease;
+  color: var(--primary-color);
+}
+
+.example-code[open] .code-summary::after {
+  transform: rotate(90deg);
+}
+
+.example-code[open] .code-summary {
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(44, 95, 45, 0.05);
+}
+
+.code-content {
+  padding: 0 30px 25px;
 }
 
 .code-description {
