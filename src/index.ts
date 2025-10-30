@@ -204,13 +204,16 @@ function patchMapPrototype(
       preferCanvas: true,
     };
 
-    return originalInit.call(this, id, headlessOpts);
+    const mapInstance = originalInit.call(this, id, headlessOpts);
+    (this as any)._headlessSize = { ...options.mapSize };
+    return mapInstance;
   };
 
   // Override getSize since jsdom doesn't support clientWidth/clientHeight
   L.Map.prototype.getSize = function (this: any): LeafletModule.Point {
     if (!this._size || this._sizeChanged) {
-      this._size = new L.Point(options.mapSize.width, options.mapSize.height);
+      const size = (this as any)._headlessSize ?? options.mapSize;
+      this._size = new L.Point(size.width, size.height);
       this._sizeChanged = false;
     }
     return this._size.clone();
@@ -223,6 +226,19 @@ function patchMapPrototype(
     height: number
   ): LeafletHeadlessMap {
     this._size = new L.Point(width, height);
+    this._sizeChanged = false;
+    (this as any)._headlessSize = { width, height };
+
+    const container = this.getContainer?.();
+    if (container && typeof container === 'object') {
+      (container as HTMLElement).style.width = `${width}px`;
+      (container as HTMLElement).style.height = `${height}px`;
+    }
+
+    if (this.options) {
+      (this.options as any).mapSize = { width, height };
+    }
+
     // Reset pixel origin to recalculate map position
     this._resetView(this.getCenter(), this.getZoom());
     return this as LeafletHeadlessMap;

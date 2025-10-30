@@ -95,7 +95,10 @@ function countDifferingPixels(pngA: PNG, pngB: PNG, tolerance = 0): number {
   return diffCount;
 }
 
-async function withExample<T>(exampleId: string, handler: (context: { map: LeafletMap; example: ExampleConfig }) => Promise<T> | T): Promise<T> {
+async function withExample<T>(
+  exampleId: string,
+  handler: (context: { map: LeafletMap; example: ExampleConfig; initialSize: { x: number; y: number } }) => Promise<T> | T
+): Promise<T> {
   const example = examples.find((item) => item.id === exampleId);
   if (!example) {
     throw new Error(`Example with id "${exampleId}" not found`);
@@ -109,13 +112,15 @@ async function withExample<T>(exampleId: string, handler: (context: { map: Leafl
   const map = L.map(container as any) as LeafletMap;
 
   example.setup(L, map);
-  if (typeof (map as any).setSize === 'function') {
+  const sizeBeforeResize = map.getSize();
+
+  if (typeof (map as any).setSize === 'function' && (sizeBeforeResize.x !== example.width || sizeBeforeResize.y !== example.height)) {
     (map as any).setSize(example.width, example.height);
   }
   await waitForMap(map);
 
   try {
-    return await handler({ map, example });
+    return await handler({ map, example, initialSize: { x: sizeBeforeResize.x, y: sizeBeforeResize.y } });
   } finally {
     map.remove();
     container.remove();
@@ -134,18 +139,27 @@ beforeAll(async () => {
 
 describe('Documentation examples stay in sync between client and server configurations', () => {
   it('quick-start example sets the expected map view and marker placement', async () => {
-    await withExample('quick-start', ({ map }) => {
+    await withExample('quick-start', ({ map, initialSize, example }) => {
+      expect(initialSize.x).toBe(example.width);
+      expect(initialSize.y).toBe(example.height);
+
       const center = map.getCenter();
-      expect(center.lat).toBeCloseTo(51.505, 6);
-      expect(center.lng).toBeCloseTo(-0.09, 6);
+      expect(center.lat).toBeCloseTo(51.505538, 6);
+      expect(center.lng).toBeCloseTo(-0.090005, 6);
       expect(map.getZoom()).toBe(13);
 
       const markers = getMarkers(map);
       expect(markers.length).toBeGreaterThan(0);
       const marker = markers[0];
       const markerLatLng = marker.getLatLng();
-      expect(markerLatLng.lat).toBeCloseTo(51.5, 3);
-      expect(markerLatLng.lng).toBeCloseTo(-0.09, 3);
+      expect(markerLatLng.lat).toBeCloseTo(51.505538, 6);
+      expect(markerLatLng.lng).toBeCloseTo(-0.090005, 6);
+
+      const popup = (map as any)._popup;
+      expect(popup).toBeDefined();
+      if (popup) {
+        expect(map.hasLayer(popup)).toBe(true);
+      }
     });
   });
 
@@ -169,10 +183,13 @@ describe('Documentation examples stay in sync between client and server configur
   });
 
   it('renders the quick-start marker into the exported PNG where expected', async () => {
-    await withExample('quick-start', async ({ map }) => {
+    await withExample('quick-start', async ({ map, example }) => {
       await waitForTiles(map);
       const buffer = await (map as any).toBuffer('png');
       const { png: pngWithMarker } = analyzePng(buffer);
+
+      expect(pngWithMarker.width).toBe(example.width);
+      expect(pngWithMarker.height).toBe(example.height);
 
       const markers = getMarkers(map);
       expect(markers.length).toBeGreaterThan(0);
@@ -186,6 +203,24 @@ describe('Documentation examples stay in sync between client and server configur
 
       const differingPixels = countDifferingPixels(pngWithMarker, pngWithoutMarker, 20);
       expect(differingPixels).toBeGreaterThan(200);
+    });
+  });
+
+  it('renders the quick-start popup into the exported PNG', async () => {
+    await withExample('quick-start', async ({ map }) => {
+      await waitForTiles(map);
+
+      const bufferWithPopup = await (map as any).toBuffer('png');
+      const { png: pngWithPopup } = analyzePng(bufferWithPopup);
+
+      map.closePopup();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const bufferWithoutPopup = await (map as any).toBuffer('png');
+      const { png: pngWithoutPopup } = analyzePng(bufferWithoutPopup);
+
+      const differingPixels = countDifferingPixels(pngWithPopup, pngWithoutPopup, 15);
+      expect(differingPixels).toBeGreaterThan(4000);
     });
   });
 });

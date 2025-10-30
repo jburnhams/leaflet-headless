@@ -29,7 +29,12 @@ bun add leaflet-node leaflet
 ```ts
 import L from 'leaflet-node';
 
-const map = L.map(document.createElement('div')).setView([51.505, -0.09], 13);
+const container = document.createElement('div');
+container.style.width = '600px';
+container.style.height = '400px';
+
+const map = L.map(container);
+map.setView([51.505538, -0.090005], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'

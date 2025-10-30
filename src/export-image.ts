@@ -118,7 +118,220 @@ export async function mapToCanvas(map: any): Promise<Canvas> {
     tempCircle.remove();
   }
 
+  await drawPopupOverlays(map, ctx, size);
+
   return canvas;
+}
+
+interface PopupLayout {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  contentLines: string[];
+  padding: { left: number; right: number; top: number; bottom: number };
+  lineHeight: number;
+  font: string;
+  tipSize: number;
+}
+
+function collectPopupLayers(map: any): any[] {
+  const L = (globalThis as any).L;
+  const PopupClass = L?.Popup;
+  const popups: any[] = [];
+  const seen = new Set<any>();
+
+  if (map?._popup && map.hasLayer?.(map._popup)) {
+    popups.push(map._popup);
+    seen.add(map._popup);
+  }
+
+  const layers = map?._layers ?? {};
+  for (const layer of Object.values(layers)) {
+    if (
+      PopupClass
+      && layer instanceof PopupClass
+      && map.hasLayer?.(layer)
+      && !seen.has(layer)
+    ) {
+      popups.push(layer);
+      seen.add(layer);
+    }
+  }
+
+  return popups;
+}
+
+function normalisePopupText(contentNode: HTMLElement | null | undefined): string[] {
+  if (!contentNode) {
+    return [''];
+  }
+
+  const rawHtml = contentNode.innerHTML ?? '';
+  const normalisedHtml = rawHtml.replace(/<br\s*\/?>(\s*)/gi, '\n$1');
+  const decoder = contentNode.ownerDocument?.createElement('div') ?? null;
+  if (decoder) {
+    decoder.innerHTML = normalisedHtml;
+  }
+  const text = (decoder?.textContent ?? contentNode.textContent ?? '').replace(/\r/g, '');
+  const lines = text.split('\n').map((line) => line.trim());
+  if (lines.length === 0) {
+    return [''];
+  }
+
+  // Preserve blank lines if they separate content, otherwise collapse duplicates
+  const result: string[] = [];
+  for (const line of lines) {
+    if (!line && result.length > 0 && result[result.length - 1] === '') {
+      continue;
+    }
+    result.push(line);
+  }
+
+  return result.length > 0 ? result : [''];
+}
+
+function measurePopupLayout(
+  map: any,
+  popup: any,
+  ctx: CanvasRenderingContext2D,
+  size: { x: number; y: number }
+): PopupLayout | null {
+  if (!popup || typeof popup.getLatLng !== 'function') {
+    return null;
+  }
+
+  const L = (globalThis as any).L;
+  if (!L) {
+    return null;
+  }
+
+  const latLng = popup.getLatLng();
+  const position = map.latLngToLayerPoint(latLng);
+  const anchorPoint = popup._getAnchor ? L.point(popup._getAnchor()) : L.point(0, 0);
+  const optionOffset = popup.options?.offset ? L.point(popup.options.offset) : L.point(0, 0);
+  const totalOffset = position.add(anchorPoint).add(optionOffset);
+
+  const contentNode: HTMLElement | null = popup._contentNode
+    ?? popup._container?.querySelector?.('.leaflet-popup-content')
+    ?? null;
+  const contentLines = normalisePopupText(contentNode);
+
+  const baseFontSize = 14;
+  const font = `${baseFontSize}px "Helvetica Neue", Arial, sans-serif`;
+  const previousFont = ctx.font;
+  ctx.font = font;
+  const measuredWidths = contentLines.map((line) => ctx.measureText(line).width);
+  ctx.font = previousFont;
+
+  const explicitWidth = contentNode?.style?.width ? parseFloat(contentNode.style.width) : NaN;
+  const contentWidth = Math.max(0, ...measuredWidths, Number.isFinite(explicitWidth) ? explicitWidth : 0);
+  const padding = { left: 20, right: 24, top: 13, bottom: 13 };
+  const boxWidth = Math.max(40, contentWidth + padding.left + padding.right);
+  const lineHeight = Math.round(baseFontSize * 1.35);
+  const contentHeight = Math.max(lineHeight, lineHeight * contentLines.length);
+  const boxHeight = contentHeight + padding.top + padding.bottom;
+  const tipSize = 12;
+
+  const left = totalOffset.x - boxWidth / 2;
+  const top = size.y - totalOffset.y - (boxHeight + tipSize);
+
+  return {
+    left,
+    top,
+    width: boxWidth,
+    height: boxHeight,
+    contentLines,
+    padding,
+    lineHeight,
+    font,
+    tipSize,
+  };
+}
+
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+): void {
+  const clampedRadius = Math.min(radius, width / 2, height / 2);
+
+  ctx.beginPath();
+  ctx.moveTo(x + clampedRadius, y);
+  ctx.lineTo(x + width - clampedRadius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + clampedRadius);
+  ctx.lineTo(x + width, y + height - clampedRadius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - clampedRadius, y + height);
+  ctx.lineTo(x + clampedRadius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - clampedRadius);
+  ctx.lineTo(x, y + clampedRadius);
+  ctx.quadraticCurveTo(x, y, x + clampedRadius, y);
+  ctx.closePath();
+}
+
+async function drawPopupOverlays(
+  map: any,
+  ctx: CanvasRenderingContext2D,
+  size: { x: number; y: number }
+): Promise<void> {
+  const popupLayers = collectPopupLayers(map);
+  if (popupLayers.length === 0) {
+    return;
+  }
+
+  for (const popup of popupLayers) {
+    const layout = measurePopupLayout(map, popup, ctx, size);
+    if (!layout) {
+      continue;
+    }
+
+    const { left, top, width, height, contentLines, padding, lineHeight, font, tipSize } = layout;
+    const tipHalf = tipSize;
+    const tipBaseY = top + height;
+    const tipCenterX = left + width / 2;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#ffffff';
+    drawRoundedRect(ctx, left, top, width, height, 12);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.lineWidth = 1;
+
+    ctx.beginPath();
+    ctx.moveTo(tipCenterX, tipBaseY);
+    ctx.lineTo(tipCenterX + tipHalf, tipBaseY + tipHalf);
+    ctx.lineTo(tipCenterX, tipBaseY + tipHalf * 2);
+    ctx.lineTo(tipCenterX - tipHalf, tipBaseY + tipHalf);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    drawRoundedRect(ctx, left, top, width, height, 12);
+    ctx.stroke();
+
+    ctx.font = font;
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#333333';
+    let textY = top + padding.top;
+    const textX = left + padding.left;
+    for (const line of contentLines) {
+      ctx.fillText(line, textX, textY);
+      textY += lineHeight;
+    }
+
+    ctx.restore();
+  }
 }
 
 /**
