@@ -30,6 +30,54 @@ export const examples = [
     width: 600,
     height: 400,
     code: {
+      leaflet: `import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const map = L.map('map-container');
+
+// Give the map an explicit size via CSS
+const element = document.getElementById('map-container');
+element.style.width = '600px';
+element.style.height = '400px';
+
+const londonLatLng = [51.505538, -0.090005];
+map.setView(londonLatLng, 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+L.marker(londonLatLng)
+  .addTo(map)
+  .bindPopup('A pretty popup.<br> Easily customizable.')
+  .openPopup();`,
+      leafletLabel: 'Leaflet.js (Browser)',
+      leafletNode: `import L from 'leaflet-node';
+
+const container = document.createElement('div');
+container.style.width = '600px';
+container.style.height = '400px';
+
+const map = L.map(container);
+
+const londonLatLng = [51.505538, -0.090005];
+map.setView(londonLatLng, 13);
+map.setSize(600, 400);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+L.marker(londonLatLng)
+  .addTo(map)
+  .bindPopup('A pretty popup.<br> Easily customizable.')
+  .openPopup();
+
+await new Promise((resolve) => setTimeout(resolve, 1000));
+await map.saveImage('quick-start.png');`,
+      leafletNodeLabel: 'leaflet-node (Server)',
       notes: usageNotes([
         {
           label: 'Image export tip',
@@ -38,14 +86,20 @@ export const examples = [
       ])
     },
     setup: (L, map) => {
-      map.setView([51.505, -0.09], 13);
+      const londonLatLng = [51.505538, -0.090005];
+
+      map.setView(londonLatLng, 13);
+
+      if (typeof map.setSize === 'function') {
+        map.setSize(600, 400);
+      }
 
       L.tileLayer(TILE_URL, {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
-      L.marker([51.5, -0.09])
+      L.marker(londonLatLng)
         .addTo(map)
         .bindPopup('A pretty popup.<br> Easily customizable.')
         .openPopup();

@@ -76,9 +76,17 @@ Example:
   width: 600,
   height: 400,
   setup: (L, map) => {
-    map.setView([51.505, -0.09], 13);
+    const exampleSize = { width: 600, height: 400 };
+    const londonLatLng = [51.505538, -0.090005];
+
+    map.setView(londonLatLng, 13);
+
+    if (typeof (map as any).setSize === 'function') {
+      (map as any).setSize(exampleSize.width, exampleSize.height);
+    }
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    L.marker([51.5, -0.09]).addTo(map);
+    L.marker(londonLatLng).addTo(map).bindPopup('Example popup').openPopup();
   }
 }
 ```
