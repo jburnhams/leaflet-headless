@@ -12,6 +12,8 @@ import type { LeafletHeadlessMap } from '../../src/types.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const TILE_URL = process.env.LEAFLET_NODE_TILE_URL ?? 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
 async function leafletImageExample(filename: string, callback?: (filename: string) => void): Promise<string> {
   // Create an element for the map
   const element = document.createElement('div');
@@ -35,8 +37,11 @@ async function leafletImageExample(filename: string, callback?: (filename: strin
   L.marker([-12, -14]).addTo(map);
 
   // Add tile layer
-  L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  L.tileLayer(TILE_URL, {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    tileSize: 256,
+    minZoom: 0,
+    maxZoom: 18,
   }).addTo(map);
 
   // Save the image

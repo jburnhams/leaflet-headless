@@ -3,6 +3,10 @@
  * Each example is rendered both client-side (live) and server-side (PNG)
  */
 
+const TILE_URL = (typeof process !== 'undefined' && process.env && process.env.LEAFLET_NODE_TILE_URL)
+  ? process.env.LEAFLET_NODE_TILE_URL
+  : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
 export const examples = [
   {
     id: 'quick-start',
@@ -13,7 +17,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([51.505, -0.09], 13);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
@@ -33,7 +37,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([51.508, -0.11], 13);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
@@ -66,7 +70,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([51.5, -0.09], 13);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
@@ -99,7 +103,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([39.74739, -105], 13);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
@@ -134,7 +138,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([45.51, -122.68], 13);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
@@ -175,7 +179,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([39.73, -104.99], 10);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
@@ -216,7 +220,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([40.7128, -74.0060], 11);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors',
         minZoom: 10,
         maxZoom: 15
@@ -248,7 +252,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([48.8566, 2.3522], 12);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
@@ -279,7 +283,7 @@ export const examples = [
       map.setView([37.7749, -122.4194], 12);
 
       // Using a different tile provider
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
@@ -309,7 +313,7 @@ export const examples = [
     setup: (L, map) => {
       map.setView([40, -100], 4);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer(TILE_URL, {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
