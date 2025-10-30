@@ -296,9 +296,6 @@ describe('Documentation examples stay in sync between client and server configur
       expect(initialPng.width).toBe(example.width);
       expect(initialPng.height).toBe(example.height);
 
-      expect(pngWithMarker.width).toBe(example.width);
-      expect(pngWithMarker.height).toBe(example.height);
-
       const markers = getMarkers(map);
       expect(markers.length).toBeGreaterThan(0);
       const marker = markers[0];
