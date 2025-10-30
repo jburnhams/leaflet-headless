@@ -4,8 +4,43 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
 
-Run [Leaflet](https://leafletjs.com) maps in Node.js environments. Perfect for server-side map generation, automated testing, and headless rendering.
+Leaflet-node brings the full Leaflet map API to Node.js so you can render maps without a browser.<br>
+Reuse the same map setup for server-side image generation, automated tests, and CI pipelines.
 
+## Installation
+
+### Requirements
+
+- Node.js >= 20
+- Linux users need glibc >= 2.18 for the bundled [`@napi-rs/canvas`](https://github.com/Brooooooklyn/canvas)
+- Peer dependency: [`leaflet`](https://www.npmjs.com/package/leaflet) ^1.9.0
+
+### Package managers
+
+```bash
+npm install leaflet-node leaflet
+yarn add leaflet-node leaflet
+pnpm add leaflet-node leaflet
+bun add leaflet-node leaflet
+```
+
+## Quick example
+
+```ts
+import L from 'leaflet-node';
+
+const map = L.map(document.createElement('div')).setView([51.505, -0.09], 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+map.setSize(600, 400);
+await new Promise((resolve) => setTimeout(resolve, 1000));
+await map.saveImage('map.png');
+```
+
+📚 View the full documentation and live examples at [jburnhams.github.io/leaflet-node](https://jburnhams.github.io/leaflet-node/).
 
 ---
 

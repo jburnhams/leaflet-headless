@@ -4,6 +4,154 @@
 
 import { examples } from './examples.js';
 
+function formatCode(codeString) {
+  if (!codeString) {
+    return '';
+  }
+
+  const lines = codeString.replace(/\r\n/g, '\n').split('\n');
+
+  while (lines.length && !lines[0].trim()) {
+    lines.shift();
+  }
+
+  while (lines.length && !lines[lines.length - 1].trim()) {
+    lines.pop();
+  }
+
+  const indent = lines.reduce((min, line) => {
+    if (!line.trim()) {
+      return min;
+    }
+
+    const match = line.match(/^(\s+)/);
+    const leading = match ? match[1].length : 0;
+    return Math.min(min, leading);
+  }, Infinity);
+
+  const normalized = indent === Infinity
+    ? lines
+    : lines.map((line) => (line.startsWith(' '.repeat(indent)) ? line.slice(indent) : line));
+
+  return normalized.join('\n');
+}
+
+function createCodeBlock(label, codeString) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'code-block';
+
+  if (label) {
+    const blockLabel = document.createElement('div');
+    blockLabel.className = 'code-block-label';
+    blockLabel.textContent = label;
+    wrapper.appendChild(blockLabel);
+  }
+
+  const pre = document.createElement('pre');
+  const code = document.createElement('code');
+  code.textContent = formatCode(codeString);
+  pre.appendChild(code);
+  wrapper.appendChild(pre);
+
+  return wrapper;
+}
+
+function createNotesList(notes = []) {
+  if (!Array.isArray(notes) || notes.length === 0) {
+    return null;
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'code-notes';
+
+  const heading = document.createElement('div');
+  heading.className = 'code-notes-heading';
+  heading.textContent = 'Setup differences & dependencies';
+  wrapper.appendChild(heading);
+
+  const list = document.createElement('ul');
+  list.className = 'code-notes-list';
+
+  notes.forEach((note) => {
+    const item = document.createElement('li');
+    const strong = document.createElement('strong');
+    strong.textContent = `${note.label}: `;
+    item.appendChild(strong);
+    item.appendChild(document.createTextNode(note.text));
+    list.appendChild(item);
+  });
+
+  wrapper.appendChild(list);
+  return wrapper;
+}
+
+function createCodeSection(example) {
+  const codeDetails = example.code || {};
+  const elements = [];
+
+  const hasSeparateBlocks = Boolean(codeDetails.leaflet || codeDetails.leafletNode);
+
+  if (hasSeparateBlocks) {
+    const columns = document.createElement('div');
+    columns.className = 'code-columns';
+
+    if (codeDetails.leaflet) {
+      const label = codeDetails.leafletLabel || 'Leaflet.js (browser)';
+      columns.appendChild(createCodeBlock(label, codeDetails.leaflet));
+    }
+
+    if (codeDetails.leafletNode) {
+      const label = codeDetails.leafletNodeLabel || 'leaflet-node (Node.js)';
+      columns.appendChild(createCodeBlock(label, codeDetails.leafletNode));
+    }
+
+    if (columns.childElementCount > 0) {
+      elements.push(columns);
+    }
+  } else {
+    const sharedCode = codeDetails.shared
+      || (typeof example.setup === 'function' ? example.setup.toString() : '');
+
+    if (sharedCode) {
+      const label = codeDetails.sharedLabel || 'Shared Leaflet setup (browser + Node)';
+      elements.push(createCodeBlock(label, sharedCode));
+    }
+  }
+
+  const notesElement = createNotesList(codeDetails.notes);
+  if (notesElement) {
+    elements.push(notesElement);
+  }
+
+  if (elements.length === 0) {
+    return null;
+  }
+
+  const section = document.createElement('div');
+  section.className = 'example-code';
+
+  const heading = document.createElement('h4');
+  heading.className = 'code-heading';
+  heading.textContent = codeDetails.heading || 'Code & setup';
+  section.appendChild(heading);
+
+  const descriptionText = codeDetails.description
+    || `Use this configuration with Leaflet.js in the browser or leaflet-node on the server. In Node set the map size to ${example.width}×${example.height} before exporting.`;
+
+  if (descriptionText) {
+    const description = document.createElement('p');
+    description.className = 'code-description';
+    description.textContent = descriptionText;
+    section.appendChild(description);
+  }
+
+  elements.forEach((element) => {
+    section.appendChild(element);
+  });
+
+  return section;
+}
+
 /**
  * Initialize and render all examples
  */
@@ -23,6 +171,8 @@ function initializeExamples() {
       <h3>${example.title}</h3>
       <p>${example.description}</p>
     `;
+
+    const codeSection = createCodeSection(example);
 
     // Create content container
     const content = document.createElement('div');
@@ -53,9 +203,12 @@ function initializeExamples() {
     `;
 
     // Assemble the example
+    exampleDiv.appendChild(header);
+    if (codeSection) {
+      exampleDiv.appendChild(codeSection);
+    }
     content.appendChild(clientSide);
     content.appendChild(serverSide);
-    exampleDiv.appendChild(header);
     exampleDiv.appendChild(content);
     container.appendChild(exampleDiv);
 

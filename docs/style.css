@@ -118,6 +118,63 @@ h2 {
   font-size: 0.9rem;
 }
 
+.installation .install-commands {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 15px 0;
+}
+
+.installation .install-commands pre {
+  margin: 0;
+}
+
+.installation .install-note {
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.quick-start-grid {
+  display: grid;
+  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.quick-start-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.quick-start-card h3 {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.quick-start-card ul {
+  margin-left: 20px;
+  list-style: disc;
+  font-size: 0.95rem;
+  display: grid;
+  gap: 8px;
+}
+
+.quick-start-card pre {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.quick-start-card code {
+  font-size: 0.85rem;
+}
+
 /* Examples */
 .example {
   margin-bottom: 50px;
@@ -147,6 +204,82 @@ h2 {
 .example-header p {
   opacity: 0.95;
   font-size: 0.95rem;
+}
+
+.example-code {
+  padding: 25px 30px 20px;
+  background: #fefefe;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.code-heading {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.code-description {
+  margin-bottom: 15px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.code-block {
+  margin-bottom: 18px;
+}
+
+.code-block-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.code-block pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+.code-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.code-notes {
+  margin-top: 10px;
+  background: rgba(44, 95, 45, 0.05);
+  border-left: 4px solid var(--secondary-color);
+  border-radius: 6px;
+  padding: 15px 20px;
+}
+
+.code-notes-heading {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.code-notes-list {
+  margin-left: 18px;
+  display: grid;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.code-notes-list li strong {
+  font-weight: 600;
+  color: #222;
 }
 
 .example-content {
