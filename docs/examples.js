@@ -7,6 +7,21 @@ const TILE_URL = (typeof process !== 'undefined' && process.env && process.env.L
   ? process.env.LEAFLET_NODE_TILE_URL
   : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
+const defaultUsageNotes = [
+  {
+    label: 'Leaflet.js setup',
+    text: 'Include the Leaflet CSS and JavaScript (via CDN or your bundler), create a <div> container, then call this setup with L.map(containerId) in the browser.'
+  },
+  {
+    label: 'leaflet-node setup',
+    text: 'Install leaflet-node alongside Leaflet (npm|yarn|pnpm|bun add leaflet-node leaflet). Run on Node.js 20+ with the bundled @napi-rs/canvas (glibc ≥ 2.18 on Linux), call the same setup, set map.setSize(width, height), then await map.saveImage(...) to write an image.'
+  }
+];
+
+function usageNotes(extra = []) {
+  return [...defaultUsageNotes, ...extra];
+}
+
 export const examples = [
   {
     id: 'quick-start',
@@ -14,6 +29,14 @@ export const examples = [
     description: 'A simple map with a marker and popup showing the basics of Leaflet',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Image export tip',
+          text: 'In Node call await map.saveImage("quick-start.png") after the shared setup to get the PNG shown on the right.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([51.505, -0.09], 13);
 
@@ -34,6 +57,14 @@ export const examples = [
     description: 'Drawing vector layers: circles, polygons, and polylines with custom styling',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Vector layers',
+          text: 'Circle, polygon, and polyline rendering APIs behave the same in both environments—styles translate directly to the exported PNG.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([51.508, -0.11], 13);
 
@@ -67,6 +98,14 @@ export const examples = [
     description: 'Using custom icons for markers with different sizes and anchor points',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Remote assets',
+          text: 'leaflet-node downloads icon images over HTTPS using undici—ensure the URLs are accessible to your server runtime.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([51.5, -0.09], 13);
 
@@ -100,6 +139,14 @@ export const examples = [
     description: 'Displaying GeoJSON data with custom styling',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Data loading',
+          text: 'Both builds accept plain GeoJSON objects—load or fetch your data before calling the shared setup.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([39.74739, -105], 13);
 
@@ -135,6 +182,14 @@ export const examples = [
     description: 'Drawing lines and routes with multiple styling options',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Multiple polylines',
+          text: 'You can add any number of polylines before exporting—leaflet-node batches the draw calls exactly as the browser does.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([45.51, -122.68], 13);
 
@@ -176,6 +231,14 @@ export const examples = [
     description: 'Organizing multiple layers into groups for easier management',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Layer ordering',
+          text: 'LayerGroup logic is identical—the order in which you add layers controls z-index in both Leaflet.js and leaflet-node.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([39.73, -104.99], 10);
 
@@ -217,6 +280,14 @@ export const examples = [
     description: 'Demonstrating zoom level control and bounds',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Zoom controls',
+          text: 'minZoom/maxZoom behave the same everywhere—leaflet-node respects the bounds when generating tiles for export.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([40.7128, -74.0060], 11);
 
@@ -249,6 +320,14 @@ export const examples = [
     description: 'Various popup configurations and styling options',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'HTML content',
+          text: 'leaflet-node renders popup HTML (including inline images) using jsdom—make sure external image URLs permit server access.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([48.8566, 2.3522], 12);
 
@@ -279,6 +358,14 @@ export const examples = [
     description: 'Using different tile providers and overlays',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Tile providers',
+          text: 'Swap in any compatible tile URL template—the same attribution and access rules apply in the browser and in Node.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([37.7749, -122.4194], 12);
 
@@ -310,6 +397,14 @@ export const examples = [
     description: 'GeoJSON with custom styling based on properties',
     width: 600,
     height: 400,
+    code: {
+      notes: usageNotes([
+        {
+          label: 'Dynamic styling',
+          text: 'Style callbacks receive the same feature data in both runtimes, so property-based fills translate directly to PNG output.'
+        }
+      ])
+    },
     setup: (L, map) => {
       map.setView([40, -100], 4);
 

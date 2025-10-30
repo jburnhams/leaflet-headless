@@ -35,19 +35,47 @@
 
     <section class="installation">
       <h2>Quick Start</h2>
-      <pre><code>npm install leaflet-node leaflet</code></pre>
-      <pre><code class="language-javascript">import L from 'leaflet-node';
+      <p>Install the shared packages with your preferred package manager:</p>
+      <div class="install-commands">
+        <pre><code>npm install leaflet-node leaflet</code></pre>
+        <pre><code>yarn add leaflet-node leaflet</code></pre>
+        <pre><code>pnpm add leaflet-node leaflet</code></pre>
+        <pre><code>bun add leaflet-node leaflet</code></pre>
+      </div>
+      <p class="install-note">Node.js 20+ is required. The bundled <code>@napi-rs/canvas</code> ships prebuilt binaries (ensure glibc ≥ 2.18 on Linux).</p>
+      <div class="quick-start-grid">
+        <div class="quick-start-card">
+          <h3>Leaflet.js (Browser)</h3>
+          <ul>
+            <li>Include the Leaflet CSS and JS from the CDN (or bundle them).</li>
+            <li>Add a container element, e.g. <code>&lt;div id="map" class="map-container"&gt;&lt;/div&gt;</code>.</li>
+            <li>Reuse any example setup by passing <code>L</code> and the map instance.</li>
+          </ul>
+          <pre><code class="language-javascript">import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import { setup } from './my-shared-setup.js';
 
-const map = L.map(document.createElement('div')).setView([51.505, -0.09], 13);
+const map = L.map('map');
+setup(L, map);</code></pre>
+        </div>
+        <div class="quick-start-card">
+          <h3>leaflet-node (Server / CI)</h3>
+          <ul>
+            <li>Install <code>leaflet-node</code> and the Leaflet peer dependency.</li>
+            <li>Create a headless map and call the same setup function.</li>
+            <li>Size the canvas, then export to PNG/JPEG with <code>saveImage</code>.</li>
+          </ul>
+          <pre><code class="language-javascript">import L from 'leaflet-node';
+import { setup } from './my-shared-setup.js';
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+const map = L.map(document.createElement('div'));
+setup(L, map);
 
-L.marker([51.5, -0.09]).addTo(map);
-
-// Save to PNG
+map.setSize(600, 400);
+await new Promise((resolve) => setTimeout(resolve, 1000));
 await map.saveImage('map.png');</code></pre>
+        </div>
+      </div>
     </section>
 
     <section id="examples">
