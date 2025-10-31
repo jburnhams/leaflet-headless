@@ -247,8 +247,18 @@ export async function mapToCanvas(map: any): Promise<Canvas> {
           (imgElement as any)._napiImage = image;
         }
 
-        const width = imgElement.width || parseInt(imgElement.getAttribute('width') || '0', 10) || image.width;
-        const height = imgElement.height || parseInt(imgElement.getAttribute('height') || '0', 10) || image.height;
+        const cssWidth = parseCssPx(imgElement.style?.width);
+        const cssHeight = parseCssPx(imgElement.style?.height);
+        const width = cssWidth ?? (
+          imgElement.width ||
+          parseInt(imgElement.getAttribute('width') || '0', 10) ||
+          image.width
+        );
+        const height = cssHeight ?? (
+          imgElement.height ||
+          parseInt(imgElement.getAttribute('height') || '0', 10) ||
+          image.height
+        );
 
         ctx.drawImage(image as any, x, y, width, height);
       } catch (error) {

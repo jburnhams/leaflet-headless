@@ -357,6 +357,77 @@ describe('Documentation examples stay in sync between client and server configur
     });
   });
 
+  it('renders the custom icon marker into the exported PNG using the configured size and anchor', async () => {
+    await withExample('custom-icons', async ({ map }) => {
+      await waitForTiles(map);
+
+      const markers = getMarkers(map);
+      expect(markers.length).toBeGreaterThanOrEqual(2);
+
+      const customMarker = markers.find((marker) => {
+        const iconUrl = (marker.options.icon as any)?.options?.iconUrl;
+        return typeof iconUrl === 'string' && iconUrl.includes('marker-icon-2x-green');
+      });
+
+      expect(customMarker).toBeDefined();
+      if (!customMarker) {
+        throw new Error('Custom marker not found in example');
+      }
+
+      const iconOptions = (customMarker.options.icon as any)?.options ?? {};
+      const iconSize = toPointTuple(iconOptions.iconSize, [25, 41]);
+      const iconAnchor = toPointTuple(iconOptions.iconAnchor, [0, 0]);
+      const markerLatLng = customMarker.getLatLng();
+
+      const bufferWithMarker = await (map as any).toBuffer('png');
+      const { png: pngWithMarker } = analyzePng(bufferWithMarker);
+
+      customMarker.remove();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const bufferWithoutMarker = await (map as any).toBuffer('png');
+      const { png: pngWithoutMarker } = analyzePng(bufferWithoutMarker);
+
+      const differingPixels = countDifferingPixels(pngWithMarker, pngWithoutMarker, 20);
+      expect(differingPixels).toBeGreaterThan(200);
+
+      const markerPoint = map.latLngToContainerPoint(markerLatLng);
+      const expectedTopLeftX = markerPoint.x - iconAnchor[0];
+      const expectedTopLeftY = markerPoint.y - iconAnchor[1];
+      const expectedBottomRightX = expectedTopLeftX + iconSize[0];
+      const expectedBottomRightY = expectedTopLeftY + iconSize[1];
+
+      const padding = 25;
+      const region: DiffBounds = {
+        minX: expectedTopLeftX - padding,
+        minY: expectedTopLeftY - padding,
+        maxX: expectedBottomRightX + padding,
+        maxY: expectedBottomRightY + padding,
+      };
+
+      const diffBounds = boundingBoxOfDifferencesInRegion(
+        pngWithMarker,
+        pngWithoutMarker,
+        20,
+        region
+      );
+
+      expect(diffBounds).not.toBeNull();
+
+      if (diffBounds) {
+        expect(diffBounds.minX).toBeGreaterThanOrEqual(expectedTopLeftX - 10);
+        expect(diffBounds.minY).toBeGreaterThanOrEqual(expectedTopLeftY - 10);
+        expect(diffBounds.maxX).toBeLessThanOrEqual(expectedBottomRightX + 10);
+        expect(diffBounds.maxY).toBeLessThanOrEqual(expectedBottomRightY + 10);
+
+        const measuredWidth = diffBounds.maxX - diffBounds.minX + 1;
+        const measuredHeight = diffBounds.maxY - diffBounds.minY + 1;
+        expect(measuredWidth).toBeGreaterThanOrEqual(iconSize[0] - 10);
+        expect(measuredHeight).toBeGreaterThanOrEqual(iconSize[1] - 10);
+      }
+    });
+  });
+
   it('renders the quick-start popup into the exported PNG', async () => {
     await withExample('quick-start', async ({ map }) => {
       await waitForTiles(map);
