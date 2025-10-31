@@ -386,7 +386,7 @@ function measurePopupLayout(
   const boxHeight = contentHeight + padding.top + padding.bottom + wrapperPadding * 2;
   const tipHalfDiagonal = 17 / Math.SQRT2;
 
-  const wrapperBottom = anchorPosition.y - tipHalfDiagonal * 2;
+  const wrapperBottom = anchorPosition.y - tipHalfDiagonal;
   const left = anchorPosition.x - boxWidth / 2;
   const top = wrapperBottom - boxHeight;
 
@@ -461,6 +461,9 @@ async function drawPopupOverlays(
     const wrapperBottom = top + height;
     const tipCenterX = anchor.x;
     const tipCenterY = anchor.y - tipHalfDiagonal;
+    const tipBaseY = wrapperBottom - wrapperPadding;
+    const tipLeftBaseX = tipCenterX - tipHalfDiagonal;
+    const tipRightBaseX = tipCenterX + tipHalfDiagonal;
 
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
@@ -471,10 +474,9 @@ async function drawPopupOverlays(
     drawRoundedRect(ctx, left, top, width, height, 12);
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(tipCenterX, wrapperBottom);
-    ctx.lineTo(tipCenterX + tipHalfDiagonal, tipCenterY);
+    ctx.moveTo(tipLeftBaseX, tipBaseY);
     ctx.lineTo(anchor.x, anchor.y);
-    ctx.lineTo(tipCenterX - tipHalfDiagonal, tipCenterY);
+    ctx.lineTo(tipRightBaseX, tipBaseY);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
@@ -485,10 +487,9 @@ async function drawPopupOverlays(
     ctx.lineWidth = 1;
 
     ctx.beginPath();
-    ctx.moveTo(tipCenterX, wrapperBottom);
-    ctx.lineTo(tipCenterX + tipHalfDiagonal, tipCenterY);
+    ctx.moveTo(tipLeftBaseX, tipBaseY);
     ctx.lineTo(anchor.x, anchor.y);
-    ctx.lineTo(tipCenterX - tipHalfDiagonal, tipCenterY);
+    ctx.lineTo(tipRightBaseX, tipBaseY);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
