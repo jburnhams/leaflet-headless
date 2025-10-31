@@ -14,6 +14,7 @@ import type * as LeafletModule from 'leaflet';
 import type { LeafletHeadlessMap, HeadlessOptions } from './types.js';
 import HeadlessImage, { loadImageSource } from './image.js';
 import { mapToCanvas } from './export-image.js';
+import { ensureDefaultFontsRegistered } from './fonts.js';
 
 // Extend global namespace for headless environment
 declare global {
@@ -36,6 +37,8 @@ const DEFAULT_OPTIONS: Required<HeadlessOptions> = {
  * Initialize the headless environment (called automatically)
  */
 function initializeEnvironment(options: HeadlessOptions = {}): typeof LeafletModule {
+  ensureDefaultFontsRegistered();
+
   // Return existing Leaflet instance if already initialized
   if ((global as any).L) {
     return (global as any).L;

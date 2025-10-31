@@ -28,7 +28,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsx scripts/copy-assets.ts",
     "dev": "tsup --watch",
     "test": "npm run test:unit && npm run test:docs",
     "test:unit": "vitest run --exclude tests/docs.test.ts",
@@ -59,6 +59,7 @@
   "dependencies": {
     "@napi-rs/canvas": "^0.1.58",
     "jsdom": "^27.0.0",
+    "typeface-noto-sans": "^1.1.13",
     "undici": "^6.22.0"
   },
   "devDependencies": {

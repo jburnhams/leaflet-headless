@@ -3,6 +3,7 @@ import * as path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import type { Map as LeafletMap, Marker as LeafletMarker } from 'leaflet';
 import type { PNG } from 'pngjs';
+import { GlobalFonts } from '@napi-rs/canvas';
 import L from '../src/index.js';
 import { analyzePng } from './helpers/png-analysis.js';
 import { ensureTileFixture } from './helpers/tile-fixture.js';
@@ -391,6 +392,55 @@ describe('Documentation examples stay in sync between client and server configur
       expect(Math.abs(centerX - totalAnchor.x)).toBeLessThanOrEqual(4);
       expect(Math.abs(bounds.maxY - totalAnchor.y)).toBeLessThanOrEqual(3);
       expect(bounds.minY).toBeLessThan(totalAnchor.y - 40);
+
+      const tipHalfDiagonal = 17 / Math.SQRT2;
+      const wrapperPadding = 1;
+      const expectedBaseY = totalAnchor.y - tipHalfDiagonal - wrapperPadding;
+      const arrowRegion: DiffBounds = {
+        minX: Math.floor(totalAnchor.x - 20),
+        minY: Math.floor(expectedBaseY) - 4,
+        maxX: Math.ceil(totalAnchor.x + 20),
+        maxY: Math.ceil(totalAnchor.y) + 2,
+      };
+
+      const arrowBounds = boundingBoxOfDifferencesInRegion(
+        pngWithPopup,
+        pngWithoutPopup,
+        12,
+        arrowRegion
+      );
+
+      expect(arrowBounds).not.toBeNull();
+      if (arrowBounds) {
+        const arrowHeight = arrowBounds.maxY - arrowBounds.minY;
+        expect(arrowBounds.minY).toBeGreaterThanOrEqual(Math.floor(expectedBaseY) - 8);
+        expect(arrowHeight).toBeLessThanOrEqual(tipHalfDiagonal + 8);
+        expect(Math.abs(arrowBounds.maxY - totalAnchor.y)).toBeLessThanOrEqual(2);
+      }
+    });
+  });
+
+  it('registers a sans-serif fallback font for popup content', async () => {
+    await withExample('quick-start', async ({ map }) => {
+      await waitForTiles(map);
+
+      expect(GlobalFonts.has('Helvetica Neue')).toBe(true);
+
+      const measurementCanvas = document.createElement('canvas');
+      measurementCanvas.width = 200;
+      measurementCanvas.height = 60;
+      const ctx = measurementCanvas.getContext('2d');
+
+      expect(ctx).not.toBeNull();
+      if (!ctx) {
+        throw new Error('Failed to acquire measurement context');
+      }
+
+      ctx.font = '13px "Helvetica Neue", Arial, Helvetica, sans-serif';
+      const width = ctx.measureText('A pretty popup.').width;
+
+      expect(width).toBeGreaterThan(94);
+      expect(width).toBeLessThan(95.5);
     });
   });
 
