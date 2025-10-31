@@ -5,6 +5,35 @@ import { fileURLToPath } from 'url';
 import { GlobalFonts } from '@napi-rs/canvas';
 
 let fontsRegistered = false;
+const registeredFonts = new Set<string>();
+
+interface FontVariant {
+  subset: string;
+  style: 'normal' | 'italic';
+  weight: number;
+}
+
+const FONT_VARIANTS: FontVariant[] = [
+  { subset: 'latin', style: 'normal', weight: 400 },
+  { subset: 'latin', style: 'italic', weight: 400 },
+  { subset: 'latin-ext', style: 'normal', weight: 400 },
+  { subset: 'latin-ext', style: 'italic', weight: 400 },
+  { subset: 'cyrillic', style: 'normal', weight: 400 },
+  { subset: 'cyrillic', style: 'italic', weight: 400 },
+  { subset: 'cyrillic-ext', style: 'normal', weight: 400 },
+  { subset: 'cyrillic-ext', style: 'italic', weight: 400 },
+  { subset: 'greek', style: 'normal', weight: 400 },
+  { subset: 'greek', style: 'italic', weight: 400 },
+  { subset: 'greek-ext', style: 'normal', weight: 400 },
+  { subset: 'greek-ext', style: 'italic', weight: 400 },
+  { subset: 'devanagari', style: 'normal', weight: 400 },
+  { subset: 'devanagari', style: 'italic', weight: 400 },
+  { subset: 'vietnamese', style: 'normal', weight: 400 },
+  { subset: 'vietnamese', style: 'italic', weight: 400 },
+];
+
+const FALLBACK_FAMILIES = ['LeafletNode Sans', 'Helvetica Neue', 'Helvetica', 'Arial'];
+const FONT_SOURCE_MODULE = '@fontsource/noto-sans';
 
 function resolveBaseDirectory(): string {
   if (typeof __dirname !== 'undefined') {
@@ -14,13 +43,50 @@ function resolveBaseDirectory(): string {
   return path.dirname(fileURLToPath(import.meta.url));
 }
 
-function resolveModuleFontPath(): string | null {
+function resolveFontsourceVariants(): string[] {
+  try {
+    const require = createRequire(import.meta.url);
+    const resolvedPaths = new Set<string>();
+
+    for (const variant of FONT_VARIANTS) {
+      const fileStem = `noto-sans-${variant.subset}-${variant.weight}-${variant.style}`;
+      const candidateFiles = [
+        `${FONT_SOURCE_MODULE}/files/${fileStem}.woff2`,
+        `${FONT_SOURCE_MODULE}/files/${fileStem}.woff`,
+      ];
+
+      for (const candidate of candidateFiles) {
+        try {
+          const fullPath = require.resolve(candidate);
+          if (existsSync(fullPath)) {
+            resolvedPaths.add(fullPath);
+            break;
+          }
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND') {
+            console.warn('leaflet-node: unable to resolve font asset path:', candidate, error);
+          }
+        }
+      }
+    }
+
+    return Array.from(resolvedPaths);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND') {
+      console.warn('leaflet-node: unable to resolve font dependency path:', error);
+    }
+  }
+
+  return [];
+}
+
+function resolveTypefaceFont(): string[] {
   try {
     const require = createRequire(import.meta.url);
     const moduleFontPath = require.resolve('typeface-noto-sans/files/noto-sans-latin-400.woff');
 
     if (existsSync(moduleFontPath)) {
-      return moduleFontPath;
+      return [moduleFontPath];
     }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND') {
@@ -28,10 +94,10 @@ function resolveModuleFontPath(): string | null {
     }
   }
 
-  return null;
+  return [];
 }
 
-function resolveBundledFontPath(): string | null {
+function resolveBundledFontPath(): string[] {
   const baseDir = resolveBaseDirectory();
   const filename = 'NotoSans-Regular.ttf';
   const searchPaths = [
@@ -43,19 +109,30 @@ function resolveBundledFontPath(): string | null {
 
   for (const candidate of searchPaths) {
     if (existsSync(candidate)) {
-      return candidate;
+      return [candidate];
     }
   }
 
-  return null;
+  return [];
 }
 
-function resolveFontPath(): string | null {
-  return resolveModuleFontPath() ?? resolveBundledFontPath();
+function resolveFontPaths(): string[] {
+  const preferred = resolveFontsourceVariants();
+  if (preferred.length > 0) {
+    return preferred;
+  }
+
+  const legacy = resolveTypefaceFont();
+  if (legacy.length > 0) {
+    return legacy;
+  }
+
+  return resolveBundledFontPath();
 }
 
 function registerFontFamily(fontPath: string, family: string): void {
-  if (typeof GlobalFonts.has === 'function' && GlobalFonts.has(family)) {
+  const key = `${family}@@${fontPath}`;
+  if (registeredFonts.has(key)) {
     return;
   }
 
@@ -63,7 +140,10 @@ function registerFontFamily(fontPath: string, family: string): void {
     const registered = GlobalFonts.registerFromPath(fontPath, family);
     if (!registered) {
       console.warn(`leaflet-node: failed to register fallback font family "${family}"`);
+      return;
     }
+
+    registeredFonts.add(key);
   } catch (error) {
     console.warn(`leaflet-node: error registering fallback font family "${family}":`, error);
   }
@@ -86,16 +166,17 @@ export function ensureDefaultFontsRegistered(): void {
     console.warn('leaflet-node: unable to load system fonts:', error);
   }
 
-  const fontPath = resolveFontPath();
-  if (!fontPath) {
+  const fontPaths = resolveFontPaths();
+  if (fontPaths.length === 0) {
     console.warn(
-      'leaflet-node: fallback font asset not found; ensure "typeface-noto-sans" is installed or register a custom font.'
+      'leaflet-node: fallback font asset not found; install "@fontsource/noto-sans" or register a custom font.'
     );
     return;
   }
 
-  registerFontFamily(fontPath, 'LeafletNode Sans');
-  registerFontFamily(fontPath, 'Helvetica Neue');
-  registerFontFamily(fontPath, 'Helvetica');
-  registerFontFamily(fontPath, 'Arial');
+  for (const fontPath of fontPaths) {
+    for (const family of FALLBACK_FAMILIES) {
+      registerFontFamily(fontPath, family);
+    }
+  }
 }

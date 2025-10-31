@@ -444,4 +444,49 @@ describe('Documentation examples stay in sync between client and server configur
     });
   });
 
+  it('registers multilingual glyph coverage for popup content', async () => {
+    await withExample('quick-start', async ({ map }) => {
+      await waitForTiles(map);
+
+      expect(GlobalFonts.has('Helvetica Neue')).toBe(true);
+
+      const familiesBuffer =
+        typeof (GlobalFonts as any).getFamilies === 'function'
+          ? (GlobalFonts as any).getFamilies()
+          : null;
+
+      expect(familiesBuffer).toBeTruthy();
+      const families = familiesBuffer ? JSON.parse(Buffer.from(familiesBuffer).toString()) : [];
+      const helveticaEntry = families.find((entry: any) => entry?.family === 'Helvetica Neue');
+
+      expect(helveticaEntry).toBeDefined();
+      expect(Array.isArray(helveticaEntry.styles)).toBe(true);
+      expect(helveticaEntry.styles.length).toBeGreaterThanOrEqual(16);
+
+      const measurementCanvas = document.createElement('canvas');
+      measurementCanvas.width = 220;
+      measurementCanvas.height = 80;
+      const ctx = measurementCanvas.getContext('2d');
+
+      expect(ctx).not.toBeNull();
+      if (!ctx) {
+        throw new Error('Failed to acquire measurement context');
+      }
+
+      ctx.font = '13px "Helvetica Neue", Arial, Helvetica, sans-serif';
+
+      const cyrillicWidth = ctx.measureText('Привет, мир!').width;
+      expect(cyrillicWidth).toBeGreaterThan(80.4);
+      expect(cyrillicWidth).toBeLessThan(80.7);
+
+      const devanagariWidth = ctx.measureText('नमस्ते दुनिया').width;
+      expect(devanagariWidth).toBeGreaterThan(96.3);
+      expect(devanagariWidth).toBeLessThan(97.4);
+
+      const greekWidth = ctx.measureText('Γειά σου κόσμε').width;
+      expect(greekWidth).toBeGreaterThan(100);
+      expect(greekWidth).toBeLessThan(100.8);
+    });
+  });
+
 });
